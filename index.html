@@ -13,25 +13,39 @@
         <div class="brand-mark">W</div>
         <div>
           <strong>WanliGO</strong>
-          <span>万利智联</span>
+          <span>行万里 万利够</span>
         </div>
       </div>
       <nav class="nav">
         <button class="nav-item"><span>⌂</span>Dashboard</button>
         <button class="nav-item"><span>⚙</span>系统管理</button>
-        <button class="nav-item"><span>☷</span>轻务设备</button>
-        <button class="nav-item active parent"><span>✉</span>短信</button>
+        <button class="nav-item parent" id="deviceParent"><span>☷</span>服务设备</button>
+        <div class="submenu">
+          <button class="submenu-item" data-module="device">设备管理</button>
+        </div>
+        <button class="nav-item active parent" id="smsParent"><span>✉</span>短信</button>
         <div class="submenu">
           <button class="submenu-item active" data-module="sms">短信管理</button>
-          <button class="submenu-item" data-module="template">短信模版</button>
+          <button class="submenu-item" data-module="template">模版管理</button>
           <button class="submenu-item" data-module="blacklist">黑名单管理</button>
         </div>
         <button class="nav-item"><span>↻</span>流量池</button>
         <button class="nav-item"><span>▣</span>系统授权</button>
         <button class="nav-item"><span>☰</span>eSim业务管理</button>
         <button class="nav-item"><span>♛</span>资费</button>
-        <button class="nav-item"><span>◉</span>解决方案</button>
+        <button class="nav-item parent" id="solutionParent"><span>◉</span>解决方案</button>
+        <div class="submenu">
+          <button class="submenu-item" data-module="package">套餐管理</button>
+          <button class="submenu-item" data-module="packageModify">套餐修改</button>
+          <button class="submenu-item" data-module="packageRenewal">套餐续订</button>
+          <button class="submenu-item" data-module="packageRenewalAudit">套餐续订审核</button>
+          <button class="submenu-item" data-module="packageRemainingQuota">套餐剩余用量</button>
+        </div>
         <button class="nav-item"><span>▤</span>订单</button>
+        <button class="nav-item parent" id="billParent"><span>▥</span>账单</button>
+        <div class="submenu">
+          <button class="submenu-item" data-module="monthlyBill">月账单</button>
+        </div>
       </nav>
     </aside>
 
@@ -39,6 +53,7 @@
       <header class="topbar">
         <button class="menu-toggle" aria-label="收起导航">☰</button>
         <div class="breadcrumb" id="breadcrumb">Dashboard / 短信 / 短信管理</div>
+        <button type="button" class="prototype-docs-btn" id="prototypeDocsBtn"><span>▤</span>需求文档</button>
         <div class="profile">
           <span>admin</span>
           <div class="avatar"></div>
@@ -46,13 +61,6 @@
       </header>
 
       <section class="content">
-        <div class="page-title">
-          <div>
-            <h1 id="pageTitle">短信管理</h1>
-            <p id="pageDesc">查看短信发送记录，支持单卡发送、批量发送和导出筛选结果。</p>
-          </div>
-        </div>
-
         <section class="card filter-card" id="filterCard"></section>
 
         <section class="card table-card">
@@ -63,6 +71,7 @@
               <button class="icon-btn" id="densityBtn" title="密度">▦</button>
             </div>
           </div>
+          <div class="sms-stats-row" id="smsStatsRow"></div>
           <div class="table-wrap">
             <table>
               <thead id="tableHead"></thead>
@@ -77,31 +86,377 @@
 
   <div class="modal-layer" id="modalLayer" aria-hidden="true"></div>
 
+  <template id="prototypeDocsModalTemplate">
+    <div class="modal modal-lg prototype-docs-modal">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2>原型文档</h2>
+      <p class="modal-desc">点击文档名称可在新标签页打开。</p>
+      <div class="prototype-doc-list">
+        <a class="prototype-doc-item" href="./套餐修改_PRD.pdf" target="_blank" rel="noopener">
+          <span class="prototype-doc-icon">PDF</span>
+          <span class="prototype-doc-name">套餐修改 PRD</span>
+          <span class="prototype-doc-open">↗</span>
+        </a>
+        <a class="prototype-doc-item" href="./套餐续订及套餐续订审核_PRD.pdf" target="_blank" rel="noopener">
+          <span class="prototype-doc-icon">PDF</span>
+          <span class="prototype-doc-name">套餐续订及套餐续订审核 PRD</span>
+          <span class="prototype-doc-open">↗</span>
+        </a>
+        <a class="prototype-doc-item" href="./套餐修改与续订_补充文档.pdf" target="_blank" rel="noopener">
+          <span class="prototype-doc-icon">PDF</span>
+          <span class="prototype-doc-name">套餐修改与续订 补充文档</span>
+          <span class="prototype-doc-open">↗</span>
+        </a>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" data-close-modal>关闭</button>
+      </div>
+    </div>
+  </template>
+
   <template id="smsSendModalTemplate">
     <div class="modal modal-lg">
       <button class="modal-close" data-close-modal>×</button>
-      <h2 data-modal-title>发送短信</h2>
+      <h2>发送短信</h2>
+      <div class="send-tabs">
+        <button type="button" class="send-tab active" data-send-tab="single">单次发送</button>
+        <button type="button" class="send-tab" data-send-tab="batch">批量发送</button>
+      </div>
       <form id="smsSendForm" class="form-stack">
         <label class="field single-only">
           <span>ICCID</span>
-          <input type="text" name="iccid" maxlength="20" placeholder="请输入20位ICCID">
+          <input type="text" name="iccid" maxlength="20" placeholder="请输入ICCID">
         </label>
         <label class="field">
-          <span class="label-row">
-            <span>短信内容</span>
-            <button type="button" class="link-btn" data-open-template-picker>选择模版</button>
-          </span>
+          <span>选择模版</span>
+          <select name="templateId" id="smsTemplateSelect">
+            <option value="">请选择短信模版</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>短信内容</span>
           <textarea name="content" maxlength="140" rows="5" placeholder="请输入短信内容"></textarea>
           <em class="counter">0/140</em>
         </label>
         <div class="field batch-only">
-          <span>上传文件</span>
+          <span class="label-row">
+            <span>上传文件</span>
+            <em class="field-hint">最多 5000 条 / 批次</em>
+          </span>
           <label class="upload-box">
             <input type="file" name="batchFile" accept=".xls,.xlsx">
             <span class="upload-icon">☁</span>
             <strong>将批量文件拖放或点击浏览上传</strong>
           </label>
           <p class="upload-tip">请上传大小不超过 <b>5MB</b>，格式为 <b>xls、xlsx</b> 的文件。<button type="button" class="link-btn strong" id="downloadBatchTemplate">下载模版</button></p>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn primary">确定</button>
+          <button type="button" class="btn ghost" data-close-modal>取消</button>
+        </div>
+      </form>
+    </div>
+  </template>
+
+  <template id="packageModifyModalTemplate">
+    <div class="modal modal-lg">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2>修改</h2>
+      <div class="send-tabs">
+        <button type="button" class="send-tab active" data-package-modify-tab="single">单卡修改</button>
+        <button type="button" class="send-tab" data-package-modify-tab="batch">批量修改</button>
+      </div>
+      <form id="packageModifyForm" class="form-stack">
+        <div class="package-modify-single-panel">
+          <label class="field">
+            <span>ICCID</span>
+            <input type="text" name="iccid" maxlength="20" placeholder="请输入ICCID">
+          </label>
+          <div class="iccid-lookup-result" id="iccidLookupResult">
+            <div class="iccid-lookup-empty">输入 ICCID 查询对应客户及原套餐信息</div>
+          </div>
+          <label class="field">
+            <span>新套餐类型</span>
+            <select name="newPackageType" id="newPackageTypeSelect">
+              <option value="">请选择</option>
+              <option value="Direct Pre-Pay">Direct Pre-Pay</option>
+              <option value="Monthly PAYG">Monthly PAYG</option>
+              <option value="Monthly Fixed">Monthly Fixed</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>新套餐名称</span>
+            <select name="newPackageName" id="newPackageNameSelect">
+              <option value="">请选择</option>
+            </select>
+          </label>
+        </div>
+        <div class="package-modify-batch-panel">
+          <label class="field">
+            <span>客户名称</span>
+            <select name="customerName" id="batchCustomerSelect">
+              <option value="">请选择</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>新套餐类型</span>
+            <select name="batchNewPackageType" id="batchNewPackageTypeSelect">
+              <option value="">请选择</option>
+              <option value="Direct Pre-Pay">Direct Pre-Pay</option>
+              <option value="Monthly PAYG">Monthly PAYG</option>
+              <option value="Monthly Fixed">Monthly Fixed</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>新套餐名称</span>
+            <select name="batchNewPackageName" id="batchNewPackageNameSelect">
+              <option value="">请选择</option>
+            </select>
+          </label>
+          <div class="field">
+            <span>上传文件</span>
+            <label class="upload-box">
+              <input type="file" name="batchFile" accept=".xls,.xlsx">
+              <span class="upload-icon">☁</span>
+              <strong>将批量文件拖放或点击浏览上传</strong>
+            </label>
+            <p class="upload-tip">请上传大小不超过 <b>5MB</b>，格式为 <b>xls、xlsx</b> 的文件。<button type="button" class="link-btn strong" id="downloadPackageModifyTemplate">下载模版</button></p>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn primary">确定</button>
+          <button type="button" class="btn ghost" data-close-modal>取消</button>
+        </div>
+      </form>
+    </div>
+  </template>
+
+  <template id="packageModifyDetailModalTemplate">
+    <div class="modal modal-xxl package-modify-detail-modal">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2>修改详情</h2>
+      <form id="packageModifyDetailModalFilter" class="filter-grid package-modify-detail-modal-filter">
+        <label class="field">
+          <span>修改人</span>
+          <select name="modifier">
+            <option value="">请选择</option>
+            <option value="张三">张三</option>
+            <option value="李四">李四</option>
+            <option value="王五">王五</option>
+            <option value="赵六">赵六</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>批次号</span>
+          <input type="text" name="batchNo" placeholder="请输入批次号">
+        </label>
+        <label class="field">
+          <span>ICCID</span>
+          <input type="text" name="iccid" placeholder="请输入ICCID">
+        </label>
+        <label class="field">
+          <span>状态</span>
+          <select name="status">
+            <option value="">请选择</option>
+            <option value="待执行">待执行</option>
+            <option value="已执行">已执行</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>客户名称</span>
+          <input type="text" name="customerName" list="packageModifyDetailCustomers" placeholder="请选择">
+          <datalist id="packageModifyDetailCustomers"></datalist>
+        </label>
+        <label class="field">
+          <span>时间范围</span>
+          <div class="range-row">
+            <input type="date" name="startDate">
+            <input type="date" name="endDate">
+          </div>
+        </label>
+        <div class="filter-actions">
+          <button type="submit" class="btn primary">搜索</button>
+          <button type="button" class="btn ghost" id="resetPackageModifyDetailModal">重置</button>
+        </div>
+      </form>
+      <div class="table-toolbar modal-table-toolbar">
+        <div class="toolbar-actions">
+          <button type="button" class="btn export" id="exportPackageModifyDetailModal">导出</button>
+        </div>
+      </div>
+      <div class="table-wrap compact">
+        <table>
+          <thead>
+            <tr>
+              <th><input type="checkbox" class="checkbox" id="packageModifyDetailModalCheckAll"></th>
+              <th>ICCID</th>
+              <th>批次号</th>
+              <th>修改人</th>
+              <th>客户名称</th>
+              <th>原套餐类型</th>
+              <th>原套餐名称</th>
+              <th>新套餐类型</th>
+              <th>新套餐名称</th>
+              <th>状态</th>
+              <th>执行完成时间</th>
+            </tr>
+          </thead>
+          <tbody id="packageModifyDetailModalBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="packageModifyDetailModalPagination"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" data-close-modal>关闭</button>
+      </div>
+    </div>
+  </template>
+
+  <template id="packageRenewalModalTemplate">
+    <div class="modal modal-lg">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2>续订</h2>
+      <div class="send-tabs">
+        <button type="button" class="send-tab active" data-renewal-tab="single">单卡续订</button>
+        <button type="button" class="send-tab" data-renewal-tab="batch">批量续订</button>
+      </div>
+      <form id="packageRenewalForm" class="form-stack">
+        <div class="package-renewal-single-panel">
+          <label class="field">
+            <span>ICCID</span>
+            <input type="text" name="iccid" maxlength="20" placeholder="请输入ICCID">
+          </label>
+          <div class="iccid-lookup-result" id="renewalLookupResult">
+            <div class="iccid-lookup-empty">输入 ICCID 后点击别处即可查询当前套餐信息</div>
+          </div>
+          <label class="field">
+            <span>新套餐名称</span>
+            <select name="newPackageName" id="renewalNewPackageNameSelect">
+              <option value="">请选择</option>
+            </select>
+          </label>
+        </div>
+        <div class="package-renewal-batch-panel">
+          <label class="field">
+            <span>客户名称</span>
+            <select name="customerName" id="renewalCustomerSelect">
+              <option value="">请选择</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>新套餐名称</span>
+            <select name="batchNewPackageName" id="renewalBatchNewPackageNameSelect">
+              <option value="">请选择</option>
+            </select>
+          </label>
+          <div class="field">
+            <span>上传文件</span>
+            <label class="upload-box">
+              <input type="file" name="batchFile" accept=".xls,.xlsx">
+              <span class="upload-icon">☁</span>
+              <strong>将批量文件拖放或点击浏览上传</strong>
+            </label>
+            <p class="upload-tip">请上传大小不超过 <b>5MB</b>，格式为 <b>xls、xlsx</b> 的文件。</p>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn primary">确定</button>
+          <button type="button" class="btn ghost" data-close-modal>取消</button>
+        </div>
+      </form>
+    </div>
+  </template>
+
+  <template id="packageRenewalLogModalTemplate">
+    <div class="modal modal-xxl package-renewal-log-modal">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2>续订日志</h2>
+      <form id="packageRenewalLogFilter" class="filter-grid package-renewal-log-filter">
+        <label class="field"><span>申请人</span><select name="operator"><option value="">请选择</option><option value="张三">张三</option><option value="李四">李四</option><option value="王五">王五</option><option value="赵六">赵六</option></select></label>
+        <label class="field"><span>类型</span><select name="type"><option value="">请选择</option><option value="单卡">单卡</option><option value="批量">批量</option></select></label>
+        <label class="field"><span>批次号</span><input type="text" name="batchNo" placeholder="请输入批次号"></label>
+        <label class="field"><span>ICCID</span><input type="text" name="iccid" placeholder="请输入ICCID"></label>
+        <label class="field"><span>客户名称</span><input type="text" name="customerName" list="renewalLogCustomerOptions" placeholder="请选择"><datalist id="renewalLogCustomerOptions"></datalist></label>
+        <label class="field"><span>续订申请时间</span><div class="range-row"><input type="date" name="startDate"><input type="date" name="endDate"></div></label>
+        <label class="field"><span>续订结果</span><select name="result"><option value="">请选择</option><option value="待审核">待审核</option><option value="已通过">已通过</option><option value="已驳回">已驳回</option><option value="全部成功">全部成功</option><option value="部份成功">部份成功</option><option value="失败">失败</option></select></label>
+        <div class="filter-actions"><button type="submit" class="btn primary">搜索</button><button type="button" class="btn ghost" id="resetPackageRenewalLog">重置</button></div>
+      </form>
+      <div class="table-wrap compact">
+        <table>
+          <thead><tr><th><input type="checkbox" class="checkbox"></th><th>批次号</th><th>申请人</th><th>类型</th><th>客户名称</th><th>当前套餐名称</th><th>新套餐名称</th><th>续订总数</th><th>成功数量</th><th>失败数量</th><th>续订结果</th><th>失败原因</th><th>续订申请时间</th><th>续订审核时间</th><th>审核人</th></tr></thead>
+          <tbody id="packageRenewalLogBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="packageRenewalLogPagination"></div>
+      <div class="modal-actions"><button type="button" class="btn ghost" data-close-modal>关闭</button></div>
+    </div>
+  </template>
+
+  <template id="packageRenewalRejectModalTemplate">
+    <div class="modal modal-lg">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2>填写驳回原因</h2>
+      <form id="packageRenewalRejectForm" class="form-stack">
+        <label class="field">
+          <span>驳回原因</span>
+          <input type="text" name="rejectReason" maxlength="100" placeholder="请输入驳回原因" required>
+        </label>
+        <div class="modal-actions">
+          <button type="submit" class="btn primary">确定</button>
+          <button type="button" class="btn ghost" data-close-modal>取消</button>
+        </div>
+      </form>
+    </div>
+  </template>
+
+  <template id="packageRenewalRecordModalTemplate">
+    <div class="modal modal-lg package-renewal-record-modal">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2>续订记录</h2>
+      <div class="iccid-lookup-card renewal-record-summary">
+        <div class="iccid-lookup-item"><span>ICCID</span><strong id="renewalRecordIccid"></strong></div>
+        <div class="iccid-lookup-item"><span>客户名称</span><strong id="renewalRecordCustomerName"></strong></div>
+      </div>
+      <div class="table-wrap compact">
+        <table>
+          <thead>
+            <tr>
+              <th>续订执行时间</th>
+              <th>续订结果</th>
+              <th>续订前套餐名称</th>
+              <th>续订后套餐名称</th>
+              <th>续订后套餐周期(月)</th>
+              <th>续订后套餐到期时间</th>
+            </tr>
+          </thead>
+          <tbody id="packageRenewalRecordBody"></tbody>
+        </table>
+      </div>
+      <div class="modal-actions"><button type="button" class="btn ghost" data-close-modal>关闭</button></div>
+    </div>
+  </template>
+
+  <template id="smsUrlConfigTemplate">
+    <div class="modal modal-lg">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2>配置URL</h2>
+      <form id="smsUrlConfigForm" class="form-stack">
+        <div class="url-config-panel">
+          <label class="field">
+            <span>地址</span>
+            <input type="text" name="receiptUrl" placeholder="请输入地址">
+          </label>
+          <label class="field">
+            <span>用户名</span>
+            <input type="text" name="receiptUsername" placeholder="请输入用户名">
+          </label>
+          <label class="field">
+            <span>密码</span>
+            <input type="password" name="receiptPassword" placeholder="请输入密码">
+          </label>
+          <label class="field field-checkbox">
+            <input type="checkbox" name="receiptEnabled" class="checkbox">
+            <span>勾选后开启回执推送</span>
+          </label>
         </div>
         <div class="modal-actions">
           <button type="submit" class="btn primary">确定</button>
@@ -169,39 +524,31 @@
     <div class="modal modal-lg">
       <button class="modal-close" data-close-modal>×</button>
       <h2 id="blacklistFormTitle">新增黑名单</h2>
+      <div class="send-tabs blacklist-tabs">
+        <button type="button" class="send-tab active" data-blacklist-tab="single">新增黑名单</button>
+        <button type="button" class="send-tab" data-blacklist-tab="batch">批量新增</button>
+      </div>
       <form id="blacklistForm" class="form-stack">
-        <label class="field">
-          <span>ICCID</span>
-          <input type="text" name="iccid" maxlength="20" placeholder="请输入20位ICCID" required>
-        </label>
-        <label class="field">
-          <span>状态</span>
-          <select name="status">
-            <option value="启用">启用</option>
-            <option value="禁用">禁用</option>
-          </select>
-        </label>
-        <div class="modal-actions">
-          <button type="submit" class="btn primary">确定</button>
-          <button type="button" class="btn ghost" data-close-modal>取消</button>
-        </div>
-      </form>
-    </div>
-  </template>
-
-  <template id="blacklistBatchAddTemplate">
-    <div class="modal modal-lg">
-      <button class="modal-close" data-close-modal>×</button>
-      <h2>批量新增黑名单</h2>
-      <form id="blacklistBatchAddForm" class="form-stack">
-        <div class="field">
-          <span>上传文件</span>
-          <label class="upload-box">
-            <input type="file" name="batchFile" accept=".xls,.xlsx">
-            <span class="upload-icon">☁</span>
-            <strong>将批量文件拖放或点击浏览上传</strong>
+        <div class="blacklist-single-panel">
+          <label class="field">
+            <span>ICCID</span>
+            <input type="text" name="iccid" maxlength="20" placeholder="请输入ICCID">
           </label>
-          <p class="upload-tip">请上传大小不超过 <b>5MB</b>，格式为 <b>xls、xlsx</b> 的文件。<button type="button" class="link-btn strong" id="downloadBlacklistTemplate">下载模版</button></p>
+          <label class="field">
+            <span>拉黑原因</span>
+            <input type="text" name="reason" placeholder="请输入拉黑原因">
+          </label>
+        </div>
+        <div class="blacklist-batch-panel">
+          <div class="field">
+            <span>上传文件</span>
+            <label class="upload-box">
+              <input type="file" name="batchFile" accept=".xls,.xlsx">
+              <span class="upload-icon">☁</span>
+              <strong>将批量文件拖放或点击浏览上传</strong>
+            </label>
+            <p class="upload-tip">请上传大小不超过 <b>5MB</b>，格式为 <b>xls、xlsx</b> 的文件。<button type="button" class="link-btn strong" id="downloadBlacklistTemplate">下载模版</button></p>
+          </div>
         </div>
         <div class="modal-actions">
           <button type="submit" class="btn primary">确定</button>
@@ -218,6 +565,243 @@
       <div class="modal-actions">
         <button type="button" class="btn danger" id="confirmOk">确定</button>
         <button type="button" class="btn ghost" data-close-modal>取消</button>
+      </div>
+    </div>
+  </template>
+
+  <template id="packageFormTemplate">
+    <div class="modal modal-xl">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2>添加套餐信息</h2>
+      <form id="packageForm" class="package-form">
+        <label class="field">
+          <span>客户名称</span>
+          <select name="customerName">
+            <option value="">请选择</option>
+            <option value="万利通信技术（深圳）有限公司">万利通信技术（深圳）有限公司</option>
+            <option value="Ingoo Holding Limited">Ingoo Holding Limited</option>
+            <option value="Thales China">Thales China</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>客户PID</span>
+          <input type="text" name="customerPid" placeholder="请输入客户PID">
+        </label>
+        <label class="field">
+          <span>套餐类型</span>
+          <select name="packageType">
+            <option value="">请选择</option>
+            <option value="Monthly Fixed">Monthly Fixed</option>
+            <option value="Direct Pre-Pay">Direct Pre-Pay</option>
+            <option value="Monthly PAYG">Monthly PAYG</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>结算方式</span>
+          <select name="billingMethod">
+            <option value="">请选择</option>
+            <option value="月结算">月结算</option>
+            <option value="预付费">预付费</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>合约时长(月)</span>
+          <input type="text" name="contractMonths" placeholder="请输入合约时长">
+        </label>
+        <label class="field">
+          <span>实体卡 SKU</span>
+          <select name="sku">
+            <option value="">请选择</option>
+            <option value="SIM-4G-WL">SIM-4G-WL</option>
+            <option value="eSIM-4G-WL">eSIM-4G-WL</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>币种(服务类)</span>
+          <select name="market">
+            <option value="">请选择</option>
+            <option value="英国">英国</option>
+            <option value="巴西">巴西</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>核心网</span>
+          <select name="coreNetwork">
+            <option value="">请选择</option>
+            <option value="WL">WL</option>
+            <option value="Arqia">Arqia</option>
+            <option value="Conexa">Conexa</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>承载网络</span>
+          <select name="bearerNetwork">
+            <option value="">请选择</option>
+            <option value="4G">4G</option>
+            <option value="5G">5G</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>套餐价格</span>
+          <div class="input-addon">
+            <input type="text" name="packagePrice" placeholder="请输入价格">
+            <select name="packageCurrency">
+              <option value="USD">币种</option>
+              <option value="CNY">CNY</option>
+              <option value="GBP">GBP</option>
+              <option value="BRL">BRL</option>
+            </select>
+          </div>
+        </label>
+        <label class="field">
+          <span>套餐总量</span>
+          <div class="input-addon">
+            <input type="text" name="packageTotal" placeholder="请输入总量">
+            <select name="packageTotalUnit">
+              <option value="GB">GB</option>
+              <option value="MB">MB</option>
+            </select>
+          </div>
+        </label>
+        <label class="field">
+          <span>上行短信价格 / 条</span>
+          <div class="input-addon">
+            <input type="text" name="moSmsPrice" placeholder="请输入价格">
+            <select name="moSmsCurrency">
+              <option value="USD">币种</option>
+              <option value="CNY">CNY</option>
+              <option value="GBP">GBP</option>
+              <option value="BRL">BRL</option>
+            </select>
+          </div>
+        </label>
+        <label class="field">
+          <span>下行短信价格 / 条</span>
+          <div class="input-addon">
+            <input type="text" name="mtSmsPrice" placeholder="请输入价格">
+            <select name="mtSmsCurrency">
+              <option value="USD">币种</option>
+              <option value="CNY">CNY</option>
+              <option value="GBP">GBP</option>
+              <option value="BRL">BRL</option>
+            </select>
+          </div>
+        </label>
+        <label class="field package-remark">
+          <span>备注</span>
+          <input type="text" name="remark" placeholder="请输入内容">
+        </label>
+        <div class="modal-actions package-actions">
+          <button type="submit" class="btn primary">确定</button>
+          <button type="button" class="btn ghost" data-close-modal>取消</button>
+        </div>
+      </form>
+    </div>
+  </template>
+
+  <template id="blacklistLogTemplate">
+    <div class="modal modal-xxl">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2>操作日志</h2>
+      <form id="blacklistLogFilterForm" class="filter-grid log-filter">
+        <label class="field">
+          <span>类型</span>
+          <select name="type">
+            <option value="">请选择</option>
+            <option value="单卡">单卡</option>
+            <option value="批量">批量</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>时间范围</span>
+          <div class="range-row">
+            <input type="date" name="startDate">
+            <input type="date" name="endDate">
+          </div>
+        </label>
+        <div class="filter-actions">
+          <button type="submit" class="btn primary">搜索</button>
+          <button type="button" class="btn ghost" id="resetBlacklistLogFilters">重置</button>
+        </div>
+      </form>
+      <div class="table-wrap compact">
+        <table>
+          <thead>
+            <tr>
+              <th>批次号</th>
+              <th>类型</th>
+              <th>ICCID</th>
+              <th>导入文件</th>
+              <th>导入时间</th>
+              <th>导入结果</th>
+              <th>总数</th>
+              <th>成功数</th>
+              <th>失败数</th>
+              <th>失败原因</th>
+            </tr>
+          </thead>
+          <tbody id="blacklistLogBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="blacklistLogPagination"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" data-close-modal>关闭</button>
+      </div>
+    </div>
+  </template>
+
+  <template id="templateLogTemplate">
+    <div class="modal modal-xxl">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2>修改日志</h2>
+      <form id="templateLogFilterForm" class="filter-grid template-log-filter">
+        <label class="field">
+          <span>时间范围</span>
+          <div class="range-row">
+            <input type="date" name="startDate">
+            <input type="date" name="endDate">
+          </div>
+        </label>
+        <label class="field">
+          <span>操作人</span>
+          <input type="text" name="operator" list="templateOperatorOptions" placeholder="请选择">
+          <datalist id="templateOperatorOptions">
+            <option value="admin"></option>
+            <option value="ops_lily"></option>
+            <option value="product_chen"></option>
+          </datalist>
+        </label>
+        <label class="field">
+          <span>操作类型</span>
+          <select name="operationType">
+            <option value="">请选择</option>
+            <option value="修改">修改</option>
+            <option value="删除">删除</option>
+          </select>
+        </label>
+        <div class="filter-actions">
+          <button type="submit" class="btn primary">搜索</button>
+          <button type="button" class="btn ghost" id="resetTemplateLogFilters">重置</button>
+        </div>
+      </form>
+      <div class="table-wrap compact">
+        <table>
+          <thead>
+            <tr>
+              <th>操作时间</th>
+              <th>操作人</th>
+              <th>模版ID</th>
+              <th>操作类型</th>
+              <th>修改前内容</th>
+              <th>修改后内容</th>
+            </tr>
+          </thead>
+          <tbody id="templateLogBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="templateLogPagination"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" data-close-modal>关闭</button>
       </div>
     </div>
   </template>
