@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WanliGO - 短信模块</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">W</div>
+        <div>
+          <strong>WanliGO</strong>
+          <span>万利智联</span>
+        </div>
+      </div>
+      <nav class="nav">
+        <button class="nav-item"><span>⌂</span>Dashboard</button>
+        <button class="nav-item"><span>⚙</span>系统管理</button>
+        <button class="nav-item"><span>☷</span>轻务设备</button>
+        <button class="nav-item active parent"><span>✉</span>短信</button>
+        <div class="submenu">
+          <button class="submenu-item active" data-module="sms">短信管理</button>
+          <button class="submenu-item" data-module="template">短信模版</button>
+          <button class="submenu-item" data-module="blacklist">黑名单管理</button>
+        </div>
+        <button class="nav-item"><span>↻</span>流量池</button>
+        <button class="nav-item"><span>▣</span>系统授权</button>
+        <button class="nav-item"><span>☰</span>eSim业务管理</button>
+        <button class="nav-item"><span>♛</span>资费</button>
+        <button class="nav-item"><span>◉</span>解决方案</button>
+        <button class="nav-item"><span>▤</span>订单</button>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="menu-toggle" aria-label="收起导航">☰</button>
+        <div class="breadcrumb" id="breadcrumb">Dashboard / 短信 / 短信管理</div>
+        <div class="profile">
+          <span>admin</span>
+          <div class="avatar"></div>
+        </div>
+      </header>
+
+      <section class="content">
+        <div class="page-title">
+          <div>
+            <h1 id="pageTitle">短信管理</h1>
+            <p id="pageDesc">查看短信发送记录，支持单卡发送、批量发送和导出筛选结果。</p>
+          </div>
+        </div>
+
+        <section class="card filter-card" id="filterCard"></section>
+
+        <section class="card table-card">
+          <div class="table-toolbar">
+            <div class="toolbar-actions" id="toolbarActions"></div>
+            <div class="table-tools">
+              <button class="icon-btn" id="refreshBtn" title="刷新">⟳</button>
+              <button class="icon-btn" id="densityBtn" title="密度">▦</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead id="tableHead"></thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="pagination"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-layer" id="modalLayer" aria-hidden="true"></div>
+
+  <template id="smsSendModalTemplate">
+    <div class="modal modal-lg">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2 data-modal-title>发送短信</h2>
+      <form id="smsSendForm" class="form-stack">
+        <label class="field single-only">
+          <span>ICCID</span>
+          <input type="text" name="iccid" maxlength="20" placeholder="请输入20位ICCID">
+        </label>
+        <label class="field">
+          <span class="label-row">
+            <span>短信内容</span>
+            <button type="button" class="link-btn" data-open-template-picker>选择模版</button>
+          </span>
+          <textarea name="content" maxlength="140" rows="5" placeholder="请输入短信内容"></textarea>
+          <em class="counter">0/140</em>
+        </label>
+        <div class="field batch-only">
+          <span>上传文件</span>
+          <label class="upload-box">
+            <input type="file" name="batchFile" accept=".xls,.xlsx">
+            <span class="upload-icon">☁</span>
+            <strong>将批量文件拖放或点击浏览上传</strong>
+          </label>
+          <p class="upload-tip">请上传大小不超过 <b>5MB</b>，格式为 <b>xls、xlsx</b> 的文件。<button type="button" class="link-btn strong" id="downloadBatchTemplate">下载模版</button></p>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn primary">确定</button>
+          <button type="button" class="btn ghost" data-close-modal>取消</button>
+        </div>
+      </form>
+    </div>
+  </template>
+
+  <template id="templatePickerTemplate">
+    <div class="modal modal-xl">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2>选择短信模版</h2>
+      <p class="modal-desc">仅可选择启用状态的短信模版。</p>
+      <div class="table-wrap compact">
+        <table>
+          <thead>
+            <tr>
+              <th>选择</th>
+              <th>模版名称</th>
+              <th>模版内容</th>
+              <th>状态</th>
+            </tr>
+          </thead>
+          <tbody id="templatePickerBody"></tbody>
+        </table>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn primary" id="confirmTemplatePick">确定</button>
+        <button type="button" class="btn ghost" data-close-modal>取消</button>
+      </div>
+    </div>
+  </template>
+
+  <template id="templateFormTemplate">
+    <div class="modal modal-lg">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2 id="templateFormTitle">新建模版</h2>
+      <form id="templateForm" class="form-stack">
+        <label class="field">
+          <span>模版名称</span>
+          <input type="text" name="name" placeholder="请输入模版名称" required>
+        </label>
+        <label class="field">
+          <span>模版内容</span>
+          <textarea name="content" maxlength="140" rows="5" placeholder="请输入模版内容" required></textarea>
+          <em class="counter">0/140</em>
+        </label>
+        <label class="field">
+          <span>状态</span>
+          <select name="status">
+            <option value="启用">启用</option>
+            <option value="禁用">禁用</option>
+          </select>
+        </label>
+        <div class="modal-actions">
+          <button type="submit" class="btn primary">确定</button>
+          <button type="button" class="btn ghost" data-close-modal>取消</button>
+        </div>
+      </form>
+    </div>
+  </template>
+
+  <template id="blacklistFormTemplate">
+    <div class="modal modal-lg">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2 id="blacklistFormTitle">新增黑名单</h2>
+      <form id="blacklistForm" class="form-stack">
+        <label class="field">
+          <span>ICCID</span>
+          <input type="text" name="iccid" maxlength="20" placeholder="请输入20位ICCID" required>
+        </label>
+        <label class="field">
+          <span>状态</span>
+          <select name="status">
+            <option value="启用">启用</option>
+            <option value="禁用">禁用</option>
+          </select>
+        </label>
+        <div class="modal-actions">
+          <button type="submit" class="btn primary">确定</button>
+          <button type="button" class="btn ghost" data-close-modal>取消</button>
+        </div>
+      </form>
+    </div>
+  </template>
+
+  <template id="blacklistBatchAddTemplate">
+    <div class="modal modal-lg">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2>批量新增黑名单</h2>
+      <form id="blacklistBatchAddForm" class="form-stack">
+        <div class="field">
+          <span>上传文件</span>
+          <label class="upload-box">
+            <input type="file" name="batchFile" accept=".xls,.xlsx">
+            <span class="upload-icon">☁</span>
+            <strong>将批量文件拖放或点击浏览上传</strong>
+          </label>
+          <p class="upload-tip">请上传大小不超过 <b>5MB</b>，格式为 <b>xls、xlsx</b> 的文件。<button type="button" class="link-btn strong" id="downloadBlacklistTemplate">下载模版</button></p>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn primary">确定</button>
+          <button type="button" class="btn ghost" data-close-modal>取消</button>
+        </div>
+      </form>
+    </div>
+  </template>
+
+  <template id="confirmTemplate">
+    <div class="modal modal-sm">
+      <h2 id="confirmTitle">确认操作</h2>
+      <p id="confirmMessage" class="confirm-message"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn danger" id="confirmOk">确定</button>
+        <button type="button" class="btn ghost" data-close-modal>取消</button>
+      </div>
+    </div>
+  </template>
+
+  <div class="toast" id="toast"></div>
+  <script src="js/app.js"></script>
+</body>
+</html>
