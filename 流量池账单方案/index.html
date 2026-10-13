@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>流量池月账单：三种落点</title>
+<style>
+  :root {
+    --bg: #f5f7fc;
+    --card: #fff;
+    --ink: #2d3440;
+    --muted: #8b95a7;
+    --line: #edf0f5;
+    --head: #f6f7f9;
+    --primary: #10b3aa;
+    --primary-dark: #079990;
+    --soft: #e8fbfa;
+    --danger: #ef6b7a;
+    --amber: #9a6700;
+    --amber-bg: #fff6e5;
+    --green: #137a45;
+    --green-bg: #e8f6ee;
+    --shadow: 0 12px 32px rgba(31, 45, 61, 0.06);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 14px/1.5 "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  }
+  button { font: inherit; color: inherit; }
+  .wrap { max-width: 1440px; margin: 0 auto; padding: 28px 20px 72px; }
+  h1 { margin: 0 0 8px; font-size: 22px; }
+  h2 { margin: 0; font-size: 16px; }
+  .lead { margin: 0; max-width: 920px; color: #344054; }
+  .schemes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 18px 0; }
+  .scheme {
+    text-align: left;
+    border: 1px solid var(--line);
+    background: var(--card);
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+  }
+  .scheme.active { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16, 179, 170, 0.15); }
+  .scheme b { display: block; margin-bottom: 4px; }
+  .scheme span { color: #596273; font-size: 13px; }
+  .badge { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: var(--soft); color: var(--primary-dark); font-size: 12px; font-weight: 700; }
+  .screen { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 16px 16px 8px; margin-bottom: 16px; }
+  .crumb { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+  .note { margin: 8px 0 12px; color: #596273; font-size: 13px; }
+  .warn { margin: 0 0 12px; padding: 10px 12px; border-radius: 10px; background: var(--amber-bg); color: var(--amber); }
+  .ok { margin: 0 0 12px; padding: 10px 12px; border-radius: 10px; background: var(--green-bg); color: var(--green); }
+  .table-wrap { overflow: auto; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 0; font-size: 13px; }
+  th, td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; vertical-align: middle; }
+  th { background: var(--head); color: #626b7c; font-weight: 700; }
+  tbody tr:hover { background: #fbfcff; }
+  tfoot td { background: #fbfcff; font-weight: 700; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .total { color: var(--danger); font-weight: 800; }
+  .hot { background: #fff8eb; }
+  .zero { color: #98a2b3; }
+  .tag { display: inline-block; padding: 1px 7px; border-radius: 999px; background: #f2f4f7; color: #475467; font-size: 12px; }
+  .tag.pool { background: var(--soft); color: var(--primary-dark); }
+  .tag.wait { background: var(--amber-bg); color: var(--amber); }
+  .tag.off { background: #f2f4f7; color: #98a2b3; }
+  .op { color: var(--primary-dark); font-weight: 700; }
+  .foot { color: var(--muted); font-size: 12px; }
+  .compare { min-width: 0; }
+  .compare td { white-space: normal; }
+  .usage-table td.name { white-space: normal; min-width: 132px; max-width: 148px; }
+  th.added { color: var(--primary-dark); }
+  td.added { background: #e8fbfa; }
+  tr.off-invoice td { background: #fff8eb; }
+  tr.off-invoice td.added { background: #dff3ea; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>流量池月账单放在哪</h1>
+  <p class="lead">三套页面用的是同一批 2026-09 账单。客户、池、卡和金额都相同，变的是这些金额出现在哪一张表。计费按现行流量池规则：预购池只收超池费用和池外费用；共享池再加固定套餐费乘以应收费卡数。超池费用不拆到单卡。</p>
+  <section class="screen">
+    <h2>同一批账，三个落点</h2>
+    <p class="note">下面先看差异。点一个方案后，页面换成该方案的完整表格。</p>
+    <div class="table-wrap">
+      <table class="compare">
+        <thead>
+          <tr><th>要看的数</th><th>方案 A</th><th>方案 B</th><th>方案 C</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>客户月账单合计</td><td class="num">920.92</td><td class="num">896.22</td><td class="num">56.92</td></tr>
+          <tr><td>流量池账单合计</td><td>没有这张表</td><td>844.00，已经含在上面的 896.22 里</td><td>864.00，另外一套账</td></tr>
+          <tr><td>万利通信的池费用</td><td>流量池内费用 300.00，流量池外费用 464.00</td><td>流量池费用 764.00 = EU池 700.00 + APAC池 64.00</td><td>客户账单是 0.00。700.00 和 64.00 只在流量池账单</td></tr>
+          <tr><td>中亿的池费用</td><td>流量池内费用 20.00，流量池外费用 50.00，月租费含共享池 30.00</td><td>流量池费用 80.00 = 池外 50.00 + 月租 30.00。超池为 0</td><td>客户账单不含这 100.00</td></tr>
+          <tr><td>月租费</td><td>非池卡月租和共享池月租合成一格</td><td>只统计非池卡。中亿是 8.00，池内卡的 30.00 在流量池费用里</td><td>客户账单只有非池卡月租</td></tr>
+          <tr><td>天翼物联（无池）</td><td class="num">12.98</td><td class="num">11.48</td><td class="num">12.98</td></tr>
+          <tr><td>用量明细</td><td>加「流量池名称」「用量归属」。入口仍只有月账单</td><td>同样加这两列。可从流量池账单进入，并只看该池</td><td>再加「费用所在」。池内卡的用量还在，费用改记在流量池账单</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <div class="schemes" id="schemes">
+    <button class="scheme active" type="button" data-scheme="a">
+      <b>方案 A · 只改现有两张表</b>
+      <span>池费用写进客户月账单和单卡明细。没有单独的池账单。</span>
+    </button>
+    <button class="scheme" type="button" data-scheme="b">
+      <b>方案 B · 客户账单下加一层 <span class="badge">推荐</span></b>
+      <span>月账单用「流量池费用」收齐各池。月租费只统计非池卡。</span>
+    </button>
+    <button class="scheme" type="button" data-scheme="c">
+      <b>方案 C · 流量池账单独立</b>
+      <span>池账单不回写客户月账单。客户应收和池费用分成两套账。</span>
+    </button>
+  </div>
+  <div id="app"></div>
+  <p class="foot">预购-EU池：月初剩余 233,000 MB，当月区域内 235,000 MB，超池 2,000 MB × 0.15 = 300.00；池外 5,000 MB × 0.08 = 400.00。预购-APAC池：超池 0，池外 800 MB × 0.08 = 64.00。共享-亚太Fixed 的本月总量是 9,700 MB，池外 1,000 MB × 0.05 = 50.00，月租 10 × 3 张 = 30.00。方案 A、C 把 active test 的 800 MB 算进池，区域内 9,800 MB，超池 20.00。方案 B 不把这 800 MB 算进池，区域内 9,000 MB，超池 0。cancel 不收月租。待出池卡的用量仍进本池。</p>
+</div>
+<script>
+const customers = [
+  { id: "43", name: "万利通信技术（深圳）有限公司", billNo: "BL2026090043", cycle: "2026-09", recharge: 0 },
+  { id: "48", name: "中亿（深圳）信息科技有限公司", billNo: "BL2026090048", cycle: "2026-09", recharge: 0 },
+  { id: "51", name: "天翼物联", billNo: "BL2026090051", cycle: "2026-09", recharge: 0 }
+];
+
+const pools = [
+  { customerId: "43", name: "预购-EU池", type: "预购流量池", allowance: 233000, allowanceLabel: "月初剩余", inRegion: 235000, over: 2000, outside: 5000, overPrice: 0.15, outPrice: 0.08, rent: 0, rentCards: 0 },
+  { customerId: "43", name: "预购-APAC池", type: "预购流量池", allowance: 180000, allowanceLabel: "月初剩余", inRegion: 20000, over: 0, outside: 800, overPrice: 0.12, outPrice: 0.08, rent: 0, rentCards: 0 },
+  { customerId: "48", name: "共享-亚太Fixed", type: "共享流量池", allowance: 9700, allowanceLabel: "本月总量", inRegion: 9800, over: 100, outside: 1000, overPrice: 0.20, outPrice: 0.05, rent: 30, rentCards: 3 }
+];
+
+const cards = [
+  { customerId: "43", iccid: "89860404112026090001", orderNo: "SO202609001", packageName: "Monthly PAYG_APAC", poolName: "—", presence: "非池卡", packageIn: 12.50, packageOut: 3.20, inMb: null, outMb: null, rent: 0, smsCount: 2, smsFee: 0.24 },
+  { customerId: "43", iccid: "89860404112026090011", orderNo: "SO202609011", packageName: "—", poolName: "预购-EU池", presence: "在池", packageIn: 0, packageOut: 0, inMb: 120000, outMb: 2000, rent: 0, smsCount: 0, smsFee: 0 },
+  { customerId: "43", iccid: "89860404112026090012", orderNo: "SO202609012", packageName: "—", poolName: "预购-EU池", presence: "在池", packageIn: 0, packageOut: 0, inMb: 80000, outMb: 3000, rent: 0, smsCount: 0, smsFee: 0 },
+  { customerId: "43", iccid: "89860404112026090013", orderNo: "SO202609013", packageName: "—", poolName: "预购-EU池", presence: "待出池", packageIn: 0, packageOut: 0, inMb: 35000, outMb: 0, rent: 0, smsCount: 0, smsFee: 0 },
+  { customerId: "43", iccid: "89860404112026090014", orderNo: "SO202609014", packageName: "—", poolName: "预购-APAC池", presence: "在池", packageIn: 0, packageOut: 0, inMb: 20000, outMb: 800, rent: 0, smsCount: 0, smsFee: 0 },
+  { customerId: "48", iccid: "89860404112026090021", orderNo: "SO202609021", packageName: "Monthly Fixed_Z5", poolName: "—", presence: "非池卡", packageIn: 20, packageOut: 0, inMb: null, outMb: null, rent: 8, smsCount: 0, smsFee: 0 },
+  { customerId: "48", iccid: "89860404112026090031", orderNo: "SO202609031", packageName: "Monthly Fixed_Z5", poolName: "共享-亚太Fixed", presence: "在池", packageIn: 0, packageOut: 0, inMb: 5000, outMb: 400, rent: 10, smsCount: 0, smsFee: 0 },
+  { customerId: "48", iccid: "89860404112026090032", orderNo: "SO202609032", packageName: "Monthly Fixed_Z5", poolName: "共享-亚太Fixed", presence: "在池", packageIn: 0, packageOut: 0, inMb: 3000, outMb: 600, rent: 10, smsCount: 0, smsFee: 0 },
+  { customerId: "48", iccid: "89860404112026090033", orderNo: "SO202609033", packageName: "Monthly Fixed_Z5", poolName: "共享-亚太Fixed", presence: "在池", packageIn: 0, packageOut: 0, inMb: 1000, outMb: 0, rent: 10, smsCount: 0, smsFee: 0 },
+  { customerId: "48", iccid: "89860404112026090034", orderNo: "SO202609034", packageName: "Monthly Fixed_Z5", poolName: "共享-亚太Fixed", presence: "active test", packageIn: 0, packageOut: 0, inMb: 800, outMb: 0, rent: 0, smsCount: 0, smsFee: 0 },
+  { customerId: "48", iccid: "89860404112026090035", orderNo: "SO202609035", packageName: "Monthly Fixed_Z5", poolName: "共享-亚太Fixed", presence: "cancel", packageIn: 0, packageOut: 0, inMb: 0, outMb: 0, rent: 0, smsCount: 0, smsFee: 0 },
+  { customerId: "51", iccid: "89860404112026090041", orderNo: "SO202609041", packageName: "Monthly PAYG_Z1", poolName: "—", presence: "非池卡", packageIn: 6, packageOut: 1.50, inMb: null, outMb: null, rent: 5, smsCount: 4, smsFee: 0.48 }
+];
+
+const outPrice = { "预购-EU池": 0.08, "预购-APAC池": 0.08, "共享-亚太Fixed": 0.05 };
+
+const usages = [
+  { customerId: "43", iccid: "89860404112026090001", packageName: "Monthly PAYG_APAC", poolName: "—", feeType: "Data", bucket: "套餐内", mcc: "460", country: "China", mnc: "00", amount: 700, unit: "MB" },
+  { customerId: "43", iccid: "89860404112026090001", packageName: "Monthly PAYG_APAC", poolName: "—", feeType: "Data", bucket: "套餐外", mcc: "310", country: "United States", mnc: "260", amount: 120, unit: "MB" },
+  { customerId: "43", iccid: "89860404112026090001", packageName: "Monthly PAYG_APAC", poolName: "—", feeType: "SMS", bucket: "短信", mcc: "460", country: "China", mnc: "00", amount: 2, unit: "条" },
+  { customerId: "43", iccid: "89860404112026090011", packageName: "—", poolName: "预购-EU池", feeType: "Data", bucket: "区域内", mcc: "262", country: "Germany", mnc: "01", amount: 70000, unit: "MB" },
+  { customerId: "43", iccid: "89860404112026090011", packageName: "—", poolName: "预购-EU池", feeType: "Data", bucket: "区域内", mcc: "208", country: "France", mnc: "01", amount: 50000, unit: "MB" },
+  { customerId: "43", iccid: "89860404112026090011", packageName: "—", poolName: "预购-EU池", feeType: "Data", bucket: "区域外", mcc: "460", country: "China", mnc: "00", amount: 2000, unit: "MB" },
+  { customerId: "43", iccid: "89860404112026090012", packageName: "—", poolName: "预购-EU池", feeType: "Data", bucket: "区域内", mcc: "262", country: "Germany", mnc: "01", amount: 80000, unit: "MB" },
+  { customerId: "43", iccid: "89860404112026090012", packageName: "—", poolName: "预购-EU池", feeType: "Data", bucket: "区域外", mcc: "460", country: "China", mnc: "01", amount: 3000, unit: "MB" },
+  { customerId: "43", iccid: "89860404112026090013", packageName: "—", poolName: "预购-EU池", feeType: "Data", bucket: "区域内", mcc: "208", country: "France", mnc: "10", amount: 35000, unit: "MB" },
+  { customerId: "43", iccid: "89860404112026090014", packageName: "—", poolName: "预购-APAC池", feeType: "Data", bucket: "区域内", mcc: "460", country: "China", mnc: "00", amount: 12000, unit: "MB" },
+  { customerId: "43", iccid: "89860404112026090014", packageName: "—", poolName: "预购-APAC池", feeType: "Data", bucket: "区域内", mcc: "525", country: "Singapore", mnc: "01", amount: 8000, unit: "MB" },
+  { customerId: "43", iccid: "89860404112026090014", packageName: "—", poolName: "预购-APAC池", feeType: "Data", bucket: "区域外", mcc: "310", country: "United States", mnc: "260", amount: 800, unit: "MB" },
+  { customerId: "48", iccid: "89860404112026090021", packageName: "Monthly Fixed_Z5", poolName: "—", feeType: "Data", bucket: "套餐内", mcc: "460", country: "China", mnc: "00", amount: 2048, unit: "MB" },
+  { customerId: "48", iccid: "89860404112026090031", packageName: "—", poolName: "共享-亚太Fixed", feeType: "Data", bucket: "区域内", mcc: "460", country: "China", mnc: "00", amount: 3000, unit: "MB" },
+  { customerId: "48", iccid: "89860404112026090031", packageName: "—", poolName: "共享-亚太Fixed", feeType: "Data", bucket: "区域内", mcc: "525", country: "Singapore", mnc: "01", amount: 2000, unit: "MB" },
+  { customerId: "48", iccid: "89860404112026090031", packageName: "—", poolName: "共享-亚太Fixed", feeType: "Data", bucket: "区域外", mcc: "310", country: "United States", mnc: "260", amount: 400, unit: "MB" },
+  { customerId: "48", iccid: "89860404112026090032", packageName: "—", poolName: "共享-亚太Fixed", feeType: "Data", bucket: "区域内", mcc: "460", country: "China", mnc: "00", amount: 3000, unit: "MB" },
+  { customerId: "48", iccid: "89860404112026090032", packageName: "—", poolName: "共享-亚太Fixed", feeType: "Data", bucket: "区域外", mcc: "440", country: "Japan", mnc: "10", amount: 600, unit: "MB" },
+  { customerId: "48", iccid: "89860404112026090033", packageName: "—", poolName: "共享-亚太Fixed", feeType: "Data", bucket: "区域内", mcc: "525", country: "Singapore", mnc: "01", amount: 1000, unit: "MB" },
+  { customerId: "48", iccid: "89860404112026090034", packageName: "—", poolName: "共享-亚太Fixed", feeType: "Data", bucket: "区域内", mcc: "460", country: "China", mnc: "01", amount: 800, unit: "MB" },
+  { customerId: "51", iccid: "89860404112026090041", packageName: "Monthly PAYG_Z1", poolName: "—", feeType: "Data", bucket: "套餐内", mcc: "460", country: "China", mnc: "01", amount: 500, unit: "MB" },
+  { customerId: "51", iccid: "89860404112026090041", packageName: "Monthly PAYG_Z1", poolName: "—", feeType: "Data", bucket: "套餐外", mcc: "310", country: "United States", mnc: "260", amount: 140, unit: "MB" },
+  { customerId: "51", iccid: "89860404112026090041", packageName: "Monthly PAYG_Z1", poolName: "—", feeType: "SMS", bucket: "短信", mcc: "460", country: "China", mnc: "00", amount: 4, unit: "条" }
+];
+
+function money(value) {
+  return Number(value).toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function qty(value) {
+  if (value === null || value === undefined) return "—";
+  return `${Number(value).toLocaleString("zh-CN")} MB`;
+}
+function sum(list, pick) {
+  return list.reduce((total, item) => total + pick(item), 0);
+}
+function customerPools(customerId) {
+  return pools.filter((pool) => pool.customerId === customerId);
+}
+function customerCards(customerId) {
+  return cards.filter((card) => card.customerId === customerId);
+}
+function poolFee(pool) {
+  return {
+    overFee: pool.over * pool.overPrice,
+    outFee: pool.outside * pool.outPrice,
+    total: pool.over * pool.overPrice + pool.outside * pool.outPrice + pool.rent
+  };
+}
+function cardOutFee(card) {
+  if (card.poolName === "—") return 0;
+  return card.outMb * outPrice[card.poolName];
+}
+function cardCountsInPool(card, scheme) {
+  if (card.poolName === "—") return false;
+  return !(scheme === "b" && card.presence === "active test");
+}
+function measuredPool(pool, scheme) {
+  const own = cards.filter((card) => card.poolName === pool.name && cardCountsInPool(card, scheme));
+  const inRegion = sum(own, (card) => card.inMb || 0);
+  const outside = sum(own, (card) => card.outMb || 0);
+  const over = Math.max(0, inRegion - pool.allowance);
+  const overFee = over * pool.overPrice;
+  const outFee = outside * pool.outPrice;
+  return { inRegion, outside, over, overFee, outFee, rent: pool.rent, total: overFee + outFee + pool.rent };
+}
+function cardFlowMb(card) {
+  if (card.inMb !== null && card.inMb !== undefined) return card.inMb + card.outMb;
+  return sum(usages.filter((row) => row.iccid === card.iccid && row.unit === "MB"), (row) => row.amount);
+}
+function customerFigures(customer, scheme) {
+  const ownCards = customerCards(customer.id);
+  const ownPools = customerPools(customer.id);
+  if (scheme === "b") {
+    const packageIn = sum(ownCards, (card) => card.packageIn);
+    const poolCost = sum(ownPools, (pool) => measuredPool(pool, scheme).total);
+    const rent = sum(ownCards.filter((card) => card.poolName === "—"), (card) => card.rent);
+    const smsCount = sum(ownCards, (card) => card.smsCount);
+    const smsFee = sum(ownCards, (card) => card.smsFee);
+    const total = packageIn + poolCost + rent + smsFee + customer.recharge;
+    return { packageIn, poolCost, rent, smsCount, smsFee, total };
+  }
+  const packageIn = sum(ownCards, (card) => card.packageIn);
+  const packageOut = sum(ownCards, (card) => card.packageOut);
+  const includePool = scheme !== "c";
+  const poolInside = includePool ? sum(ownPools, (pool) => poolFee(pool).overFee) : 0;
+  const poolOutside = includePool ? sum(ownPools, (pool) => poolFee(pool).outFee) : 0;
+  const rent = includePool
+    ? sum(ownCards, (card) => card.rent)
+    : sum(ownCards.filter((card) => card.poolName === "—"), (card) => card.rent);
+  const smsCount = sum(ownCards, (card) => card.smsCount);
+  const smsFee = sum(ownCards, (card) => card.smsFee);
+  const total = packageIn + packageOut + poolInside + poolOutside + rent + smsFee + customer.recharge;
+  return { packageIn, packageOut, poolInside, poolOutside, rent, smsCount, smsFee, total };
+}
+function cardMoney(card, scheme) {
+  const writeBack = scheme !== "c" && card.poolName !== "—";
+  const poolOut = writeBack ? cardOutFee(card) : 0;
+  const rent = scheme === "c" && card.poolName !== "—" ? 0 : card.rent;
+  const total = card.packageIn + card.packageOut + poolOut + rent + card.smsFee;
+  return { poolOut, rent, total };
+}
+
+function tag(presence) {
+  const cls = presence === "在池" ? "pool" : presence === "待出池" ? "wait" : presence === "非池卡" ? "" : "off";
+  return `<span class="tag ${cls}">${presence}</span>`;
+}
+function num(value, hot) {
+  const cls = value === 0 ? "num zero" : hot ? "num hot" : "num";
+  return `<td class="${cls}">${money(value)}</td>`;
+}
+function table(head, body, foot) {
+  const footHtml = foot ? `<tfoot><tr>${foot}</tr></tfoot>` : "";
+  return `<div class="table-wrap"><table><thead><tr>${head.map((item) => `<th>${item}</th>`).join("")}</tr></thead><tbody>${body}</tbody>${footHtml}</table></div>`;
+}
+
+function customerTable(scheme) {
+  if (scheme === "b") return customerTableB();
+  const head = ["客户ID", "客户名称", "账单编号", "账单周期", "套餐内流量费用", "套餐外流量费用", "流量池内费用", "流量池外费用", "月租费", "短信条数", "短信费用", "充值费用", "总费用", "操作"];
+  const rows = customers.map((customer) => customerFigures(customer, scheme));
+  const body = customers.map((customer, index) => {
+    const figures = rows[index];
+    const ops = scheme === "b"
+      ? `<span class="op">账单明细</span>　<span class="op">用量明细</span>　<span class="op">流量池账单</span>`
+      : `<span class="op">账单明细</span>　<span class="op">用量明细</span>`;
+    return `<tr>
+      <td>${customer.id}</td><td>${customer.name}</td><td>${customer.billNo}</td><td>${customer.cycle}</td>
+      ${num(figures.packageIn)}${num(figures.packageOut)}${num(figures.poolInside, true)}${num(figures.poolOutside)}
+      ${num(figures.rent)}<td class="num">${figures.smsCount}</td>${num(figures.smsFee)}${num(customer.recharge)}
+      <td class="num total">${money(figures.total)}</td><td>${ops}</td>
+    </tr>`;
+  }).join("");
+  const foot = `<td colspan="4">三家合计</td>
+    ${num(sum(rows, (row) => row.packageIn))}${num(sum(rows, (row) => row.packageOut))}
+    ${num(sum(rows, (row) => row.poolInside), true)}${num(sum(rows, (row) => row.poolOutside))}
+    ${num(sum(rows, (row) => row.rent))}<td class="num">${sum(rows, (row) => row.smsCount)}</td>
+    ${num(sum(rows, (row) => row.smsFee))}${num(0)}
+    <td class="num total">${money(sum(rows, (row) => row.total))}</td><td></td>`;
+  return table(head, body, foot);
+}
+
+function customerTableB() {
+  const head = ["客户ID", "客户名称", "账单编号", "账单周期", "套餐内流量费用", "流量池费用", "月租费", "短信条数", "短信费用", "充值费用", "总费用", "操作"];
+  const rows = customers.map((customer) => customerFigures(customer, "b"));
+  const body = customers.map((customer, index) => {
+    const figures = rows[index];
+    return `<tr>
+      <td>${customer.id}</td><td>${customer.name}</td><td>${customer.billNo}</td><td>${customer.cycle}</td>
+      ${num(figures.packageIn)}<td class="num hot">${money(figures.poolCost)}</td>${num(figures.rent)}
+      <td class="num">${figures.smsCount}</td>${num(figures.smsFee)}${num(customer.recharge)}
+      <td class="num total">${money(figures.total)}</td>
+      <td><span class="op">账单明细</span>　<span class="op">用量明细</span>　<span class="op">流量池账单</span></td>
+    </tr>`;
+  }).join("");
+  const foot = `<td colspan="4">三家合计</td>
+    ${num(sum(rows, (row) => row.packageIn))}<td class="num hot">${money(sum(rows, (row) => row.poolCost))}</td>${num(sum(rows, (row) => row.rent))}
+    <td class="num">${sum(rows, (row) => row.smsCount)}</td>${num(sum(rows, (row) => row.smsFee))}${num(0)}
+    <td class="num total">${money(sum(rows, (row) => row.total))}</td><td></td>`;
+  const html = table(head, body, foot);
+  return html.replace("<th>流量池费用</th>", '<th class="added">流量池费用</th>');
+}
+
+function detailTable(scheme) {
+  if (scheme === "b") return detailTableB();
+  const head = ["客户ID", "ICCID", "套餐名称", "流量池名称", "在池情况", "套餐内流量费用", "套餐外流量费用", "流量池内费用", "流量池外费用", "月租费", "短信费用", "区域内用量", "区域外用量", "总费用"];
+  const lines = cards.map((card) => ({ card, money: cardMoney(card, scheme) }));
+  const body = lines.map(({ card, money: amount }) => {
+    return `<tr>
+      <td>${card.customerId}</td><td>${card.iccid}</td><td>${card.packageName}</td><td>${card.poolName}</td><td>${tag(card.presence)}</td>
+      ${num(card.packageIn)}${num(card.packageOut)}${num(0)}${num(amount.poolOut)}${num(amount.rent)}${num(card.smsFee)}
+      <td class="num">${qty(card.inMb)}</td><td class="num">${qty(card.outMb)}</td>
+      <td class="num total">${money(amount.total)}</td>
+    </tr>`;
+  }).join("");
+  const foot = `<td colspan="5">12 张卡合计</td>
+    ${num(sum(cards, (card) => card.packageIn))}${num(sum(cards, (card) => card.packageOut))}
+    ${num(0)}${num(sum(lines, (line) => line.money.poolOut))}${num(sum(lines, (line) => line.money.rent))}${num(sum(cards, (card) => card.smsFee))}
+    <td class="num">${qty(sum(cards, (card) => card.inMb || 0))}</td>
+    <td class="num">${qty(sum(cards, (card) => card.outMb || 0))}</td>
+    <td class="num total">${money(sum(lines, (line) => line.money.total))}</td>`;
+  return table(head, body, foot);
+}
+
+function detailTableB() {
+  const head = ["客户ID", "客户名称", "账单编号", "ICCID", "出货订单号", "套餐ID", "套餐名称", "流量池名称", "归属卡组", "套餐内流量费用", "套餐外流量费用", "流量池内费用", "流量池外费用", "月租费", "套餐费用", "短信费用", "充值费用", "卡激活日期", "月流量使用总量", "月短信使用总量", "总费用"];
+  const group = { 43: "归属卡组C", 48: "归属卡组A", 51: "归属卡组B" };
+  const packageId = { "Monthly PAYG_APAC": "43", "Monthly Fixed_Z5": "45", "Monthly PAYG_Z1": "51" };
+  const lines = cards.map((card) => {
+    const amount = cardMoney(card, "b");
+    const total = card.packageIn + card.packageOut + amount.poolOut + amount.rent + card.smsFee;
+    return { card, amount, total };
+  });
+  const body = lines.map(({ card, amount, total }) => {
+    const customer = customers.find((item) => item.id === card.customerId);
+    return `<tr>
+      <td>${card.customerId}</td><td>${customer.name}</td><td>${customer.billNo}</td><td>${card.iccid}</td><td>${card.orderNo}</td>
+      <td>${packageId[card.packageName] || "—"}</td><td>${card.packageName}</td><td>${card.poolName}</td><td>${group[card.customerId]}</td>
+      ${num(card.packageIn)}${num(card.packageOut)}${num(0)}${num(amount.poolOut)}${num(amount.rent)}${num(0)}${num(card.smsFee)}${num(0)}
+      <td>2026-01-22</td><td class="num">${cardFlowMb(card).toLocaleString("zh-CN")}</td><td class="num">${card.smsCount}</td>
+      <td class="num total">${money(total)}</td>
+    </tr>`;
+  }).join("");
+  const foot = `<td colspan="9">12 张卡合计</td>
+    ${num(sum(cards, (card) => card.packageIn))}${num(sum(cards, (card) => card.packageOut))}${num(0)}
+    ${num(sum(lines, (line) => line.amount.poolOut))}${num(sum(lines, (line) => line.amount.rent))}${num(0)}
+    ${num(sum(cards, (card) => card.smsFee))}${num(0)}<td></td>
+    <td class="num">${sum(cards, (card) => cardFlowMb(card)).toLocaleString("zh-CN")}</td>
+    <td class="num">${sum(cards, (card) => card.smsCount)}</td>
+    <td class="num total">${money(sum(lines, (line) => line.total))}</td>`;
+  return table(head, body, foot);
+}
+
+function poolTable(scheme) {
+  const rentLabel = scheme === "b" ? "月租费" : "固定套餐费";
+  const head = ["客户ID", "客户名称", "账单周期", "流量池名称", "流量池类型", "当月区域内用量", "当月超池用量", "当月池外用量", "超池费用", "池外费用", rentLabel, "应收费卡数", "账单金额"];
+  if (scheme !== "b") head.splice(5, 0, "本期可抵扣额度");
+  const body = pools.map((pool) => {
+    const customer = customers.find((item) => item.id === pool.customerId);
+    const fee = measuredPool(pool, scheme);
+    const allowance = scheme === "b" ? "" : `<td class="num">${qty(pool.allowance)}<div class="foot">${pool.allowanceLabel}</div></td>`;
+    return `<tr>
+      <td>${customer.id}</td><td>${customer.name}</td><td>${customer.cycle}</td>
+      <td>${pool.name}</td><td>${pool.type}</td>${allowance}
+      <td class="num">${qty(fee.inRegion)}</td><td class="num">${qty(fee.over)}</td><td class="num">${qty(fee.outside)}</td>
+      ${num(fee.overFee, true)}${num(fee.outFee)}${num(fee.rent)}<td class="num">${pool.rentCards}</td>
+      <td class="num total">${money(fee.total)}</td>
+    </tr>`;
+  }).join("");
+  const lead = scheme === "b" ? 8 : 9;
+  const foot = `<td colspan="${lead}">三个池合计</td>
+    ${num(sum(pools, (pool) => measuredPool(pool, scheme).overFee), true)}
+    ${num(sum(pools, (pool) => measuredPool(pool, scheme).outFee))}
+    ${num(sum(pools, (pool) => measuredPool(pool, scheme).rent))}
+    <td class="num">${sum(pools, (pool) => pool.rentCards)}</td>
+    <td class="num total">${money(sum(pools, (pool) => measuredPool(pool, scheme).total))}</td>`;
+  const html = table(head, body, foot);
+  return scheme === "b" ? html.replace("<th>月租费</th>", '<th class="added">月租费</th>') : html;
+}
+
+function usagePackageName(row, scheme) {
+  if (scheme !== "b" || row.packageName !== "—") return row.packageName;
+  const card = cards.find((item) => item.iccid === row.iccid);
+  if (card && card.packageName !== "—") return card.packageName;
+  if (row.poolName === "预购-EU池") return "WanliGO_EU27";
+  if (row.poolName === "预购-APAC池") return "Monthly PAYG_APAC";
+  return row.packageName;
+}
+function usageText(row) {
+  return row.unit === "条" ? `${row.amount} 条` : qty(row.amount);
+}
+function usageSum(list, bucket) {
+  return sum(list.filter((row) => row.bucket === bucket && row.unit === "MB"), (row) => row.amount);
+}
+function usageTable(list, scheme, markOffInvoice) {
+  const head = ["客户ID", "客户名称", "账单编号", "ICCID", "套餐名称", "流量池名称", "费用类型", "用量归属", "MCC", "国家", "MNC", "用量(MB/条)"];
+  const added = new Set(["流量池名称", "用量归属"]);
+  if (scheme === "c") {
+    head.push("费用所在");
+    added.add("费用所在");
+  }
+  const body = list.map((row) => {
+    const customer = customers.find((item) => item.id === row.customerId);
+    const offInvoice = markOffInvoice && row.poolName !== "—";
+    const where = row.poolName === "—" ? "客户月账单" : "流量池账单";
+    return `<tr class="${offInvoice ? "off-invoice" : ""}">
+      <td>${row.customerId}</td><td class="name">${customer.name}</td><td>${customer.billNo}</td><td>${row.iccid}</td>
+      <td>${usagePackageName(row, scheme)}</td><td class="added">${row.poolName}</td><td>${row.feeType}</td><td class="added">${row.bucket}</td>
+      <td>${row.mcc}</td><td>${row.country}</td><td>${row.mnc}</td><td class="num">${usageText(row)}</td>
+      ${scheme === "c" ? `<td class="added">${where}</td>` : ""}
+    </tr>`;
+  }).join("");
+  const sms = sum(list.filter((row) => row.unit === "条"), (row) => row.amount);
+  const foot = `<td colspan="${head.length}">${list.length} 行。套餐内 ${qty(usageSum(list, "套餐内"))}，套餐外 ${qty(usageSum(list, "套餐外"))}，区域内 ${qty(usageSum(list, "区域内"))}，区域外 ${qty(usageSum(list, "区域外"))}，短信 ${sms} 条</td>`;
+  return `<div class="table-wrap"><table class="usage-table"><thead><tr>${head.map((item) => `<th class="${added.has(item) ? "added" : ""}">${item}</th>`).join("")}</tr></thead><tbody>${body}</tbody><tfoot><tr>${foot}</tr></tfoot></table></div>`;
+}
+function usageSections(scheme) {
+  const common = "现有列都保留。费用类型仍是 Data / SMS。新增列用青色标出。进池后的卡不再填套餐名称。区域内指池目标区域内的用量，包含后来形成超池的那一部分，不是「还没超池」。区域外各行相加等于该池的当月池外用量。超池费用不写在这张表上。";
+  const eu = usages.filter((row) => row.poolName === "预购-EU池");
+  if (scheme === "b") {
+    return `<section class="screen">
+      <div class="crumb">账单 / 月账单 / 用量明细</div>
+      <h2>用量明细</h2>
+      <p class="note">在「套餐名称」后增加「流量池名称」，在「费用类型」后增加「用量归属」：套餐内、套餐外、区域内、区域外、短信。池内卡也填写这张卡自己的套餐名称。费用类型仍是 Data / SMS。青色列是新增的。区域内包含后来形成超池的用量，不标出哪几 MB 是超池。…0034 是 active test，用量归属仍是区域内，但这 800 MB 不计入流量池账单。</p>
+      ${usageTable(usages, scheme, false)}
+    </section>
+    <section class="screen">
+      <div class="crumb">账单 / 月账单 / 流量池账单 / 用量明细</div>
+      <h2>用量明细 · 预购-EU池</h2>
+      <p class="note">从该池的流量池账单进入，只保留这个池，列与上面相同。区域内 ${qty(usageSum(eu, "区域内"))}、区域外 ${qty(usageSum(eu, "区域外"))}，与流量池账单一致。</p>
+      ${usageTable(eu, scheme, false)}
+    </section>`;
+  }
+  const fromBill = `<section class="screen">
+      <div class="crumb">账单 / 月账单 / 用量明细</div>
+      <h2>用量明细</h2>
+      <p class="note">${scheme === "a"
+        ? `${common} 方案 A 的入口不变，仍从月账单进入，一次看该客户该周期的全部卡。这里把三家客户放在一起。EU 池区域内 235,000 MB 对得上池的当月区域内用量，其中哪 2,000 MB 算超池，这张表标不出来。`
+        : `${common} 方案 C 再加「费用所在」。浅黄色行是池内卡：用量还留在这张从月账单打开的表里，费用记在流量池账单，不在本张客户月账单。`}</p>
+      ${usageTable(usages, scheme, scheme === "c")}
+    </section>`;
+  if (scheme === "a") return fromBill;
+  return `${fromBill}
+    <section class="screen">
+      <div class="crumb">${scheme === "b" ? "账单 / 月账单 / 流量池账单 / 用量明细" : "账单 / 流量池账单 / 用量明细"}</div>
+      <h2>用量明细 · 预购-EU池</h2>
+      <p class="note">从该池的流量池账单进入，只保留这个池。区域内 ${qty(usageSum(eu, "区域内"))} 对得上当月区域内用量，区域外 ${qty(usageSum(eu, "区域外"))} 对得上当月池外用量。APAC 池和共享池用同样的入口，这里不重复展开。</p>
+      ${usageTable(eu, scheme, false)}
+    </section>`;
+}
+
+function gapText(scheme) {
+  if (scheme === "a") {
+    return `<p class="warn">万利通信客户账单「流量池内费用」是 300.00，12 张卡的这一列全是 0.00，明细加总比客户账单少 300.00。中亿同样少了共享池超池费用 20.00。池外费用和共享池月租可以按卡加总，超池费用不行。</p>`;
+  }
+  if (scheme === "b") {
+    return `<p class="ok">万利通信「流量池费用」764.00 = EU池 700.00 + APAC池 64.00。中亿「流量池费用」80.00 = 池外 50.00 + 月租 30.00，「月租费」只剩非池卡 8.00。共享池超池为 0，因为 active test 的 800 MB 不进池。三家月账单合计 896.22。</p>`;
+  }
+  return `<p class="warn">三家客户月账单合计 56.92，流量池账单合计 864.00。两边都看不到对方。客户如果只打开月账单，EU 池的 700.00 不会出现。两套账相加仍是 920.92。</p>`;
+}
+
+function render(scheme) {
+  const poolBlock = scheme === "a"
+    ? `<section class="screen"><div class="crumb">账单 / 流量池账单</div><h2>流量池账单</h2><p class="note">方案 A 不增加这张表。超池费用只留在客户月账单的「流量池内费用」里。</p></section>`
+    : `<section class="screen"><div class="crumb">${scheme === "b" ? "账单 / 月账单 / 流量池账单" : "账单 / 流量池账单"}</div><h2>流量池账单</h2><p class="note">${scheme === "b" ? "一个池一行。「固定套餐费」改为「月租费」，并去掉「本期可抵扣额度」。active test 的用量不进池，共享池区域内是 9,000 MB，超池用量是 0。待出池卡 …0013 的 35,000 MB 仍算进 EU 池。" : "独立菜单。这张表的金额不回写到上面的客户月账单。"}</p>${poolTable(scheme)}</section>`;
+  document.getElementById("app").innerHTML = `
+    ${gapText(scheme)}
+    <section class="screen">
+      <div class="crumb">账单 / 月账单</div>
+      <h2>月账单</h2>
+      <p class="note">${scheme === "b"
+        ? "列与线上一致，只把「流量池内费用」「流量池外费用」换成「流量池费用」。流量池费用 = 该客户本周期各池的超池费用 + 池外费用 + 池内卡月租。月租费只统计非池卡。总费用沿用线上算法，不含账单明细里的套餐外流量费用。"
+        : "一行是一个客户的一个账单周期。总费用是这一行要向客户收的钱。「套餐外流量费用」在现有客户月账单汇总里没有单独一列，这里补上，否则非池卡的套餐外费用无法在汇总行里看见。"}</p>
+      ${customerTable(scheme)}
+    </section>
+    <section class="screen">
+      <div class="crumb">账单 / 月账单 / 账单明细</div>
+      <h2>账单明细</h2>
+      <p class="note">${scheme === "b"
+        ? "列与线上一致，不增不减。进池卡的套餐流量费为 0，流量池内费用按卡为 0。池内卡的月租写在这一行，汇总时进入月账单的流量池费用，不进入月账单的月租费。…0034 是 active test，月流量 800 不计入共享池。"
+        : "一行是一张卡。进池后的卡不再收单卡套餐流量费。区域内用量按池目标区域归集；待出池卡 …0013 的 35,000 MB 仍算进 EU 池。"}</p>
+      ${detailTable(scheme)}
+    </section>
+    ${poolBlock}
+    ${usageSections(scheme)}
+  `;
+}
+
+function show(scheme) {
+  document.querySelectorAll(".scheme").forEach((item) => item.classList.toggle("active", item.dataset.scheme === scheme));
+  render(scheme);
+}
+document.getElementById("schemes").addEventListener("click", (event) => {
+  const button = event.target.closest(".scheme");
+  if (!button) return;
+  history.replaceState(null, "", `#${button.dataset.scheme}`);
+  show(button.dataset.scheme);
+});
+const initial = location.hash.replace("#", "");
+show(["a", "b", "c"].includes(initial) ? initial : "a");
+</script>
+</body>
+</html>

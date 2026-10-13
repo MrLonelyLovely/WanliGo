@@ -19,13 +19,14 @@
       <nav class="nav">
         <button class="nav-item"><span>⌂</span>Dashboard</button>
         <button class="nav-item"><span>⚙</span>系统管理</button>
-        <button class="nav-item parent" id="deviceParent"><span>☷</span>服务设备</button>
+        <button class="nav-item active parent" id="deviceParent"><span>☷</span>服务设备</button>
         <div class="submenu">
           <button class="submenu-item" data-module="device">设备管理</button>
+          <button class="submenu-item active" data-module="dataPool">流量池</button>
         </div>
-        <button class="nav-item active parent" id="smsParent"><span>✉</span>短信</button>
+        <button class="nav-item parent" id="smsParent"><span>✉</span>短信</button>
         <div class="submenu">
-          <button class="submenu-item active" data-module="sms">短信管理</button>
+          <button class="submenu-item" data-module="sms">短信管理</button>
           <button class="submenu-item" data-module="template">模版管理</button>
           <button class="submenu-item" data-module="blacklist">黑名单管理</button>
         </div>
@@ -35,6 +36,7 @@
         <button class="nav-item"><span>♛</span>资费</button>
         <button class="nav-item parent" id="solutionParent"><span>◉</span>解决方案</button>
         <div class="submenu">
+          <button class="submenu-item" data-module="packageQuote">套餐报价</button>
           <button class="submenu-item" data-module="package">套餐管理</button>
           <button class="submenu-item" data-module="packageModify">套餐修改</button>
           <button class="submenu-item" data-module="packageRenewal">套餐续订</button>
@@ -62,6 +64,7 @@
 
       <section class="content">
         <section class="card filter-card" id="filterCard"></section>
+        <div id="poolHistoryPanels" class="pool-history-panels" hidden></div>
 
         <section class="card table-card">
           <div class="table-toolbar">
@@ -89,24 +92,63 @@
   <template id="prototypeDocsModalTemplate">
     <div class="modal modal-lg prototype-docs-modal">
       <button class="modal-close" data-close-modal>×</button>
-      <h2>原型文档</h2>
-      <p class="modal-desc">点击文档名称可在新标签页打开。</p>
-      <div class="prototype-doc-list">
-        <a class="prototype-doc-item" href="./套餐修改_PRD.pdf" target="_blank" rel="noopener">
-          <span class="prototype-doc-icon">PDF</span>
-          <span class="prototype-doc-name">套餐修改 PRD</span>
-          <span class="prototype-doc-open">↗</span>
-        </a>
-        <a class="prototype-doc-item" href="./套餐续订及套餐续订审核_PRD.pdf" target="_blank" rel="noopener">
-          <span class="prototype-doc-icon">PDF</span>
-          <span class="prototype-doc-name">套餐续订及套餐续订审核 PRD</span>
-          <span class="prototype-doc-open">↗</span>
-        </a>
-        <a class="prototype-doc-item" href="./套餐修改与续订_补充文档.pdf" target="_blank" rel="noopener">
-          <span class="prototype-doc-icon">PDF</span>
-          <span class="prototype-doc-name">套餐修改与续订 补充文档</span>
-          <span class="prototype-doc-open">↗</span>
-        </a>
+      <h2>需求文档</h2>
+      <p class="modal-desc">左侧选择需求，右侧打开对应文档。</p>
+      <div class="prototype-docs-split">
+        <nav class="prototype-doc-nav" aria-label="需求批次">
+          <button type="button" class="prototype-doc-nav-item is-active" data-doc-batch="data-pool">
+            <span class="prototype-doc-nav-main">
+              <span class="prototype-doc-batch">流量池</span>
+              <span class="prototype-doc-badge">当前</span>
+            </span>
+            <span class="prototype-doc-count">1 份</span>
+          </button>
+          <button type="button" class="prototype-doc-nav-item" data-doc-batch="package-renewal">
+            <span class="prototype-doc-nav-main">
+              <span class="prototype-doc-batch">套餐修改与续订</span>
+              <span class="prototype-doc-badge is-history">历史</span>
+            </span>
+            <span class="prototype-doc-count">3 份</span>
+          </button>
+        </nav>
+        <div class="prototype-doc-panels">
+          <section class="prototype-doc-panel is-active" data-doc-panel="data-pool">
+            <div class="prototype-docs-pane-head">
+              <span class="prototype-doc-batch">流量池</span>
+              <span class="prototype-doc-badge">当前</span>
+            </div>
+            <div class="prototype-doc-list">
+              <a class="prototype-doc-item" href="./流量池_PRD.pdf" target="_blank" rel="noopener">
+                <span class="prototype-doc-icon">PDF</span>
+                <span class="prototype-doc-name">流量池 PRD</span>
+                <span class="prototype-doc-open">↗</span>
+              </a>
+            </div>
+          </section>
+          <section class="prototype-doc-panel" data-doc-panel="package-renewal">
+            <div class="prototype-docs-pane-head">
+              <span class="prototype-doc-batch">套餐修改与续订</span>
+              <span class="prototype-doc-badge is-history">历史</span>
+            </div>
+            <div class="prototype-doc-list">
+              <a class="prototype-doc-item" href="./套餐修改_PRD.pdf" target="_blank" rel="noopener">
+                <span class="prototype-doc-icon">PDF</span>
+                <span class="prototype-doc-name">套餐修改 PRD</span>
+                <span class="prototype-doc-open">↗</span>
+              </a>
+              <a class="prototype-doc-item" href="./套餐续订及套餐续订审核_PRD.pdf" target="_blank" rel="noopener">
+                <span class="prototype-doc-icon">PDF</span>
+                <span class="prototype-doc-name">套餐续订及套餐续订审核 PRD</span>
+                <span class="prototype-doc-open">↗</span>
+              </a>
+              <a class="prototype-doc-item" href="./套餐修改与续订_补充文档.pdf" target="_blank" rel="noopener">
+                <span class="prototype-doc-icon">PDF</span>
+                <span class="prototype-doc-name">套餐修改与续订 补充文档</span>
+                <span class="prototype-doc-open">↗</span>
+              </a>
+            </div>
+          </section>
+        </div>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn ghost" data-close-modal>关闭</button>
@@ -558,6 +600,84 @@
     </div>
   </template>
 
+  <template id="dataPoolImportModalTemplate">
+    <div class="modal modal-lg">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2>池内设备移除</h2>
+      <form id="dataPoolImportForm" class="form-stack">
+        <div class="field">
+          <span>上传文件</span>
+          <label class="upload-box">
+            <input type="file" name="outFile" accept=".xls,.xlsx">
+            <span class="upload-icon">☁</span>
+            <strong>将批量文件拖放或点击浏览上传</strong>
+          </label>
+          <p class="upload-tip">请上传大小不超过 <b>5MB</b>，格式为 <b>xls、xlsx</b> 的文件。<button type="button" class="link-btn strong" id="downloadPoolImportOutTemplate">下载模版</button></p>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn primary">确定</button>
+          <button type="button" class="btn ghost" data-close-modal>取消</button>
+        </div>
+      </form>
+    </div>
+  </template>
+
+  <template id="dataPoolRenewalModalTemplate">
+    <div class="modal modal-lg">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2>续订</h2>
+      <form id="dataPoolRenewalForm" class="form-stack">
+        <label class="field">
+          <span>流量池名称</span>
+          <input type="text" name="poolName" disabled>
+        </label>
+        <label class="field">
+          <span>客户名称</span>
+          <input type="text" name="customerName" disabled>
+        </label>
+        <div class="pool-renewal-shared-panel">
+          <label class="field">
+            <span>新套餐名称</span>
+            <input type="text" name="packageName" disabled>
+          </label>
+          <div class="field">
+            <span>上传文件</span>
+            <label class="upload-box">
+              <input type="file" name="batchFile" accept=".xls,.xlsx">
+              <span class="upload-icon">☁</span>
+              <strong>将批量文件拖放或点击浏览上传</strong>
+            </label>
+            <p class="upload-tip">请上传大小不超过 <b>5MB</b>，格式为 <b>xls、xlsx</b> 的文件。</p>
+          </div>
+        </div>
+        <div class="pool-renewal-prepaid-panel" hidden>
+          <label class="field">
+            <span>流量池容量</span>
+            <div class="data-pool-split split-unit">
+              <input type="text" name="capacity" placeholder="请输入流量池容量">
+              <select name="capacityUnit">
+                <option value="MB">MB</option>
+                <option value="GB" selected>GB</option>
+                <option value="TB">TB</option>
+              </select>
+            </div>
+          </label>
+          <label class="field">
+            <span>合约时长</span>
+            <div class="data-pool-split split-unit">
+              <input type="number" name="validMonths" min="1" value="24">
+              <span class="split-suffix">个月</span>
+            </div>
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn primary">确定</button>
+          <button type="button" class="btn ghost" data-close-modal>取消</button>
+        </div>
+      </form>
+    </div>
+  </template>
+
   <template id="confirmTemplate">
     <div class="modal modal-sm">
       <h2 id="confirmTitle">确认操作</h2>
@@ -566,6 +686,159 @@
         <button type="button" class="btn danger" id="confirmOk">确定</button>
         <button type="button" class="btn ghost" data-close-modal>取消</button>
       </div>
+    </div>
+  </template>
+
+  <template id="dataPoolFormTemplate">
+    <div class="modal modal-xl data-pool-modal">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2>新增流量池</h2>
+      <form id="dataPoolForm" class="data-pool-form" novalidate>
+        <div class="data-pool-form-grid">
+          <label class="data-pool-field" data-field="poolName">
+            <span class="data-pool-label"><i>*</i>流量池名称</span>
+            <div class="data-pool-control">
+              <input type="text" name="poolName" placeholder="请输入流量池名称">
+              <p class="field-error"></p>
+            </div>
+          </label>
+          <label class="data-pool-field" data-field="customerName">
+            <span class="data-pool-label"><i>*</i>客户名称</span>
+            <div class="data-pool-control">
+              <select name="customerName">
+                <option value="">请输入客户名称</option>
+              </select>
+              <p class="field-error"></p>
+            </div>
+          </label>
+          <label class="data-pool-field" data-field="poolType">
+            <span class="data-pool-label"><i>*</i>流量池类型</span>
+            <div class="data-pool-control">
+              <select name="poolType">
+                <option value="">请选择流量池类型</option>
+                <option value="预购流量池">预购流量池</option>
+                <option value="共享流量池">共享流量池</option>
+              </select>
+              <p class="field-error"></p>
+            </div>
+          </label>
+          <label class="data-pool-field" data-field="packageName">
+            <span class="data-pool-label"><i>*</i>关联套餐</span>
+            <div class="data-pool-control">
+              <select name="packageName" disabled>
+                <option value="">请选择关联套餐</option>
+              </select>
+              <p class="field-error"></p>
+            </div>
+          </label>
+          <label class="data-pool-field" data-field="roamingConfig" hidden>
+            <span class="data-pool-label"><i>*</i>关联漫游配置</span>
+            <div class="data-pool-control">
+              <select name="roamingConfig">
+                <option value="">请选择关联漫游配置</option>
+              </select>
+              <p class="field-error"></p>
+            </div>
+          </label>
+          <label class="data-pool-field" data-field="overPoolPrice">
+            <span class="data-pool-label"><i>*</i>超池价格</span>
+            <div class="data-pool-control">
+              <div class="data-pool-split split-currency">
+                <select name="overPoolCurrency">
+                  <option value="">请选择</option>
+                </select>
+                <input type="text" name="overPoolPrice" placeholder="请输入超池价格">
+              </div>
+              <p class="field-error"></p>
+            </div>
+          </label>
+          <label class="data-pool-field" data-field="outPoolPrice">
+            <span class="data-pool-label"><i>*</i>池外价格</span>
+            <div class="data-pool-control">
+              <div class="data-pool-split split-currency">
+                <select name="outPoolCurrency">
+                  <option value="">请选择</option>
+                </select>
+                <input type="text" name="outPoolPrice" placeholder="请输入超池价格">
+              </div>
+              <p class="field-error"></p>
+            </div>
+          </label>
+          <label class="data-pool-field" data-field="capacity">
+            <span class="data-pool-label"><i>*</i>流量池容量</span>
+            <div class="data-pool-control">
+              <div class="data-pool-split split-unit">
+                <input type="text" name="capacity" placeholder="请输入流量池容量">
+                <select name="capacityUnit">
+                  <option value="">单位</option>
+                </select>
+              </div>
+              <p class="field-error"></p>
+            </div>
+          </label>
+          <label class="data-pool-field" data-field="cardCount" hidden>
+            <span class="data-pool-label"><i>*</i>卡总数量</span>
+            <div class="data-pool-control">
+              <div class="data-pool-split split-unit">
+                <input type="text" name="cardCount" placeholder="请输入卡总数量">
+                <span class="split-suffix">张</span>
+              </div>
+              <p class="field-error"></p>
+            </div>
+          </label>
+          <div class="data-pool-field" data-field="status">
+            <span class="data-pool-label">流量池状态</span>
+            <div class="data-pool-control">
+              <div class="data-pool-radios">
+                <label class="data-pool-radio"><input type="radio" name="status" value="开启" checked><span>开启</span></label>
+                <label class="data-pool-radio"><input type="radio" name="status" value="暂停"><span>暂停</span></label>
+              </div>
+            </div>
+          </div>
+          <div class="data-pool-field" data-field="regions" hidden>
+            <span class="data-pool-label">套餐目标区域</span>
+            <div class="data-pool-control">
+              <div class="region-box" id="dataPoolRegionBox"></div>
+            </div>
+          </div>
+          <label class="data-pool-field" data-field="contractMonths" hidden>
+            <span class="data-pool-label">合约时长(月)</span>
+            <div class="data-pool-control">
+              <input type="text" name="contractMonths" placeholder="请输入合约时长" disabled>
+              <p class="field-error"></p>
+            </div>
+          </label>
+        </div>
+        <section class="package-detail-block" data-field="packageDetail" hidden>
+          <h3>关联套餐明细</h3>
+          <div class="table-wrap compact">
+            <table>
+              <thead>
+                <tr>
+                  <th>Price Group</th>
+                  <th>Country</th>
+                  <th>流量单位</th>
+                  <th>套餐内含量</th>
+                  <th>超套单价</th>
+                  <th>月租</th>
+                  <th data-detail-col="idleFee">停机保号</th>
+                </tr>
+              </thead>
+              <tbody id="dataPoolPackageDetailBody"></tbody>
+            </table>
+          </div>
+        </section>
+        <label class="data-pool-field data-pool-remark" data-field="remark">
+          <span class="data-pool-label">备注</span>
+          <div class="data-pool-control">
+            <textarea name="remark" rows="3" placeholder="请选择套餐描述"></textarea>
+          </div>
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn ghost" data-close-modal>取消</button>
+          <button type="submit" class="btn primary">确认</button>
+        </div>
+      </form>
     </div>
   </template>
 
@@ -699,6 +972,234 @@
     </div>
   </template>
 
+  <template id="dataPoolCardLogTemplate">
+    <div class="modal modal-xxl data-pool-log-modal">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2>操作日志</h2>
+      <form id="dataPoolCardLogFilterForm" class="filter-grid template-log-filter">
+        <label class="field">
+          <span>时间范围</span>
+          <div class="range-row">
+            <input type="date" name="startDate">
+            <input type="date" name="endDate">
+          </div>
+        </label>
+        <label class="field">
+          <span>操作人</span>
+          <input type="text" name="operator" list="dataPoolLogOperatorOptions" placeholder="请选择">
+          <datalist id="dataPoolLogOperatorOptions">
+            <option value="admin"></option>
+            <option value="ops_lily"></option>
+            <option value="product_chen"></option>
+          </datalist>
+        </label>
+        <label class="field">
+          <span>操作类型</span>
+          <select name="actionType">
+            <option value="">请选择</option>
+            <option value="入池">入池</option>
+            <option value="出池">出池</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>批次号</span>
+          <input type="text" name="batchNo" placeholder="请输入批次号">
+        </label>
+        <label class="field">
+          <span>结果</span>
+          <select name="result">
+            <option value="">请选择</option>
+            <option value="部份成功">部份成功</option>
+            <option value="失败">失败</option>
+            <option value="成功">成功</option>
+          </select>
+        </label>
+        <div class="filter-actions">
+          <button type="submit" class="btn primary">搜索</button>
+          <button type="button" class="btn ghost" id="resetDataPoolCardLogFilters">重置</button>
+        </div>
+      </form>
+      <div class="table-wrap compact">
+        <table>
+          <thead>
+            <tr>
+              <th>批次号</th>
+              <th>操作人</th>
+              <th>流量池名称</th>
+              <th>操作类型</th>
+              <th>文件</th>
+              <th>结果</th>
+              <th>总数</th>
+              <th>成功数</th>
+              <th>失败数</th>
+              <th>操作时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="dataPoolCardLogBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="dataPoolCardLogPagination"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" data-close-modal>关闭</button>
+      </div>
+    </div>
+  </template>
+
+  <template id="dataPoolCardLogDetailTemplate">
+    <div class="modal modal-lg">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2>操作详情</h2>
+      <div class="table-wrap compact">
+        <table>
+          <thead>
+            <tr>
+              <th>ICCID</th>
+              <th>结果</th>
+              <th>失败原因</th>
+            </tr>
+          </thead>
+          <tbody id="dataPoolCardLogDetailBody"></tbody>
+        </table>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn export" id="dataPoolCardLogDetailExport">导出</button>
+        <button type="button" class="btn ghost" data-close-modal>关闭</button>
+      </div>
+    </div>
+  </template>
+
+  <template id="packageQuoteFormTemplate">
+    <div class="modal package-quote-modal">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2>添加套餐报价</h2>
+      <form id="packageQuoteForm" class="package-quote-form" novalidate>
+        <div class="package-quote-grid">
+          <label class="field" data-field="quoteNo">
+            <span><i>*</i>报价编号</span>
+            <input type="text" name="quoteNo" placeholder="请输入报价编号">
+            <p class="field-error"></p>
+          </label>
+          <label class="field" data-field="packageType">
+            <span><i>*</i>套餐类型</span>
+            <select name="packageType">
+              <option value="">请选择</option>
+              <option value="Monthly PAYG">Monthly PAYG</option>
+              <option value="Direct Pre-Pay">Direct Pre-Pay</option>
+              <option value="Monthly Fixed">Monthly Fixed</option>
+            </select>
+            <p class="field-error"></p>
+          </label>
+          <label class="field" data-field="cardType">
+            <span><i>*</i>卡类型</span>
+            <select name="cardType">
+              <option value="">请选择</option>
+              <option value="UICC插拔">UICC插拔</option>
+              <option value="eUICC插拔">eUICC插拔</option>
+              <option value="MFF2">MFF2</option>
+            </select>
+            <p class="field-error"></p>
+          </label>
+          <label class="field" data-field="cardFee">
+            <span><i>*</i>卡费</span>
+            <input type="text" name="cardFee" placeholder="请输入卡费">
+            <p class="field-error"></p>
+          </label>
+          <label class="field" data-field="cardCurrency">
+            <span><i>*</i>卡币种</span>
+            <select name="cardCurrency">
+              <option value="">请选择</option>
+            </select>
+            <p class="field-error"></p>
+          </label>
+          <label class="field" data-field="remark">
+            <span>备注</span>
+            <input type="text" name="remark" placeholder="请输入内容">
+          </label>
+          <label class="field" data-field="companyName">
+            <span>公司名</span>
+            <input type="text" name="companyName" placeholder="请输入公司名">
+          </label>
+          <label class="field" data-field="serviceCurrency">
+            <span><i>*</i>币种(服务类)</span>
+            <select name="serviceCurrency">
+              <option value="">请选择</option>
+            </select>
+            <p class="field-error"></p>
+          </label>
+          <label class="field" data-field="roamingConfig">
+            <span><i>*</i>漫游配置</span>
+            <select name="roamingConfig">
+              <option value="">请选择</option>
+            </select>
+            <p class="field-error"></p>
+          </label>
+          <label class="field" data-field="packagePrice">
+            <span><i>*</i>套餐价格</span>
+            <div class="input-addon">
+              <input type="text" name="packagePrice" placeholder="请输入套餐价格">
+              <select name="packagePriceCurrency">
+                <option value="">币种</option>
+              </select>
+            </div>
+            <p class="field-error"></p>
+          </label>
+          <label class="field" data-field="packageTotal">
+            <span><i>*</i>套餐总量</span>
+            <div class="input-addon">
+              <input type="text" name="packageTotal" placeholder="请输入套餐总量">
+              <select name="packageTotalUnit">
+                <option value="">单位</option>
+              </select>
+            </div>
+            <p class="field-error"></p>
+          </label>
+          <label class="field" data-field="idleFee">
+            <span>停机保号</span>
+            <input type="text" name="idleFee" placeholder="请输入停机保号">
+          </label>
+        </div>
+        <div class="quote-region-block" data-field="regions" hidden>
+          <label class="field" data-field="regionSelect">
+            <span><i>*</i>套餐目标区域</span>
+            <div class="quote-region-select" id="quoteRegionSelect">
+              <button type="button" class="quote-region-trigger" id="quoteRegionTrigger">
+                <span class="quote-region-tags" id="quoteRegionTags"></span>
+                <span class="quote-region-placeholder">请选择</span>
+              </button>
+              <div class="quote-region-menu" id="quoteRegionMenu" hidden></div>
+            </div>
+            <p class="field-error"></p>
+          </label>
+          <div class="quote-region-table-wrap">
+            <table class="quote-region-table">
+              <thead>
+                <tr>
+                  <th>Price Group</th>
+                  <th>Country</th>
+                  <th>流量单位</th>
+                  <th>套餐内含量</th>
+                  <th>超套/套外单价</th>
+                  <th>月租</th>
+                </tr>
+              </thead>
+              <tbody id="quoteRegionBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <label class="field quote-copy-field" data-field="quoteCopy">
+          <span><i>*</i>报价文案</span>
+          <textarea name="quoteCopy" rows="5" placeholder="请输入内容"></textarea>
+          <p class="field-error"></p>
+        </label>
+        <div class="modal-actions">
+          <button type="submit" class="btn primary">确定</button>
+          <button type="button" class="btn ghost" data-close-modal>取消</button>
+        </div>
+      </form>
+    </div>
+  </template>
+
   <template id="blacklistLogTemplate">
     <div class="modal modal-xxl">
       <button class="modal-close" data-close-modal>×</button>
@@ -802,6 +1303,66 @@
       <div class="pagination" id="templateLogPagination"></div>
       <div class="modal-actions">
         <button type="button" class="btn ghost" data-close-modal>关闭</button>
+      </div>
+    </div>
+  </template>
+
+  <template id="dataPoolJoinModalTemplate">
+    <div class="modal modal-xxl pool-join-modal">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2>新增</h2>
+      <div class="send-tabs">
+        <button type="button" class="send-tab active" data-pool-join-tab="select">勾选入池</button>
+        <button type="button" class="send-tab" data-pool-join-tab="import">导入入池</button>
+      </div>
+      <div class="pool-join-panel" data-pool-join-panel="select">
+        <form id="dataPoolJoinFilterForm" class="pool-join-filter">
+          <label>
+            <span>ICCID</span>
+            <input type="text" name="iccid" placeholder="请输入ICCID">
+          </label>
+          <label>
+            <span>IMEI</span>
+            <input type="text" name="imei" placeholder="请输入IMEI">
+          </label>
+          <div class="filter-actions">
+            <button type="submit" class="btn primary">🔍 搜索</button>
+            <button type="button" class="btn ghost" id="resetDataPoolJoinFilters">↻ 重置</button>
+          </div>
+        </form>
+        <div class="table-wrap compact pool-join-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th><input type="checkbox" class="checkbox" id="dataPoolJoinSelectAll"></th>
+                <th>ICCID</th>
+                <th>MSISDN</th>
+                <th>IMEI</th>
+                <th>客户名称</th>
+                <th>当前套餐</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody id="dataPoolJoinBody"></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="dataPoolJoinPagination"></div>
+      </div>
+      <form id="dataPoolJoinImportForm" class="form-stack pool-join-panel" data-pool-join-panel="import" hidden>
+        <div class="field">
+          <span>上传文件</span>
+          <label class="upload-box">
+            <input type="file" name="inFile" accept=".xls,.xlsx">
+            <span class="upload-icon">☁</span>
+            <strong>将批量文件拖放或点击浏览上传</strong>
+          </label>
+          <p class="upload-tip">请上传大小不超过 <b>5MB</b>，格式为 <b>xls、xlsx</b> 的文件。<button type="button" class="link-btn strong" id="downloadPoolImportInTemplate">下载模版</button></p>
+        </div>
+      </form>
+      <div class="modal-actions">
+        <button type="button" class="btn primary" id="confirmDataPoolJoinBtn">确认加入(0)</button>
+        <button type="submit" class="btn primary" id="confirmDataPoolJoinImportBtn" form="dataPoolJoinImportForm" hidden>确定</button>
+        <button type="button" class="btn ghost" data-close-modal>取消</button>
       </div>
     </div>
   </template>
