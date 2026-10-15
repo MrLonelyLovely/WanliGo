@@ -829,9 +829,11 @@ function getBillPoolFigures(pool) {
   const over = Math.max(0, inRegion - pool.allowance);
   const rentCards = billDetailCards.filter((card) => card.poolName === pool.name && card.monthlyRent > 0);
   const rent = rentCards.reduce((total, card) => total + card.monthlyRent, 0);
+  const unitPackageFee = rentCards[0]?.packageFee || 0;
+  const packageFeeTotal = rentCards.length * unitPackageFee;
   const overFee = over * pool.overPrice;
   const outsideFee = outside * pool.outPrice;
-  return { inRegion, outside, over, overFee, outsideFee, rent, rentCards: rentCards.length, total: overFee + outsideFee + rent };
+  return { inRegion, outside, over, overFee, outsideFee, rent, packageFeeTotal, rentCards: rentCards.length, total: overFee + outsideFee + rent + packageFeeTotal };
 }
 
 function makeMonthlyBill(customerId, customerName, billNo) {
@@ -2319,7 +2321,8 @@ function renderPoolBillTable(rows) {
       <th>当月池外用量</th>
       <th>超池费用</th>
       <th>池外费用</th>
-      <th>月租费</th>
+      <th>总月租费</th>
+      <th>总套餐费用</th>
       <th>应收费卡数</th>
       <th>账单金额</th>
       <th>操作</th>
@@ -2338,11 +2341,12 @@ function renderPoolBillTable(rows) {
       <td>${formatMoney(figures.overFee, bill.currency)}</td>
       <td>${formatMoney(figures.outsideFee, bill.currency)}</td>
       <td>${formatMoney(figures.rent, bill.currency)}</td>
+      <td>${formatMoney(figures.packageFeeTotal, bill.currency)}</td>
       <td>${figures.rentCards}</td>
       <td class="text-danger">${formatMoney(figures.total, bill.currency)}</td>
       <td><button class="op-btn" data-pool-usage="${escapeAttr(pool.name)}">用量明细</button></td>
     </tr>
-  `).join("") : emptyRow(14);
+  `).join("") : emptyRow(15);
   $$("[data-pool-usage]").forEach((btn) => btn.addEventListener("click", () => {
     state.selectedPoolName = btn.dataset.poolUsage;
     state.usageReturnModule = "poolBill";
