@@ -19,6 +19,8 @@ smsRecords.forEach((row) => {
     : "";
 });
 
+const DEMO_DEVICE_ICCID = "89444610503500051171";
+
 const customerOptions = [
   "万利通信技术（深圳）有限公司",
   "7BIT LIMITED",
@@ -700,7 +702,8 @@ const packageRenewals = [
   { id: 3, iccid: "89860404112026062903", customerName: "中亿（深圳）信息科技有限公司", currentPackageName: "Z1_PAYG_25GB", status: "active test", packageMonths: 1, activatedAt: "2026-01-27", originalExpiryDate: "2026-07-15" },
   { id: 4, iccid: "89860404112026062805", customerName: "天翼物联", currentPackageName: "Z5_PAYG_25GB", status: "cancel", packageMonths: 3, activatedAt: "2026-01-27", originalExpiryDate: "2026-08-31" },
   { id: 5, iccid: "89860404112026062706", customerName: "天翼物联", currentPackageName: "Z5_PAYG_25GB", status: "inactive", packageMonths: 1, activatedAt: "2026-01-27", originalExpiryDate: "2026-07-20" },
-  { id: 6, iccid: "89860404112026062409", customerName: "万利通信技术（深圳）有限公司", currentPackageName: "Monthly_PAYG", status: "active", packageMonths: 1, activatedAt: "2026-01-28", originalExpiryDate: "2026-07-31" }
+  { id: 6, iccid: "89860404112026062409", customerName: "万利通信技术（深圳）有限公司", currentPackageName: "Monthly_PAYG", status: "active", packageMonths: 1, activatedAt: "2026-01-28", originalExpiryDate: "2026-07-31" },
+  { id: 7, iccid: DEMO_DEVICE_ICCID, customerName: "万利通信技术（深圳）有限公司", currentPackageName: "Monthly Fixed_null_2026-04-17", status: "active", packageMonths: 12, activatedAt: "2026-03-26", originalExpiryDate: "2027-03-26" }
 ];
 
 const packageQuoteSeeds = [
@@ -757,6 +760,517 @@ const packageRenewalLogs = [
   { id: 8, batchNo: "PR202603260008", type: "单卡", iccid: "89860404112026063001", customerName: "中亿（深圳）信息科技有限公司", currentPackageName: "Pre-Pay_2026-03-27", newPackageName: "Monthly_PAYG", totalCount: 1, successCount: 1, failCount: 0, result: "全部成功", executedAt: "2026-03-26 15:42:18", auditAt: "2026-03-26 15:51:33", auditor: "钱强", operator: "李四", targetIccids: ["89860404112026063001"], previousExpiryDate: "2026-03-31" },
   { id: 4, batchNo: "PR202607040004", type: "批量", fileName: "wanli_renewal_0704.xls", customerName: "万利通信技术（深圳）有限公司", currentPackageName: "Monthly_PAYG", newPackageName: "04-08", totalCount: 1, successCount: 0, failCount: 0, result: "待审核", executedAt: "2026-07-04 09:16:42", operator: "赵六", targetIccids: ["89860404112026062409"] }
 ];
+
+function getCardMarket(iccid) {
+  return String(iccid || "").startsWith("894446") ? "英国" : "巴西";
+}
+
+function getCancelEffectiveAt(fromDate = new Date()) {
+  const date = new Date(fromDate);
+  date.setMonth(date.getMonth() + 1, 1);
+  date.setHours(0, 0, 0, 0);
+  return `${formatDate(date)} 00:00:00`;
+}
+
+const cardCancelOperatorOptions = ["客户-王利", "客户-赵敏", "admin"];
+
+const CARD_CANCEL_DETAIL_FAIL_RESULTS = ["执行失败", "已驳回"];
+function getCardCancelDetailFailReason(detail) {
+  if (!CARD_CANCEL_DETAIL_FAIL_RESULTS.includes(detail.result)) return "--";
+  return detail.failReason || "注销失败";
+}
+
+function getCardCancelStatusBadgeClass(status) {
+  if (["执行成功", "待执行"].includes(status)) return "success";
+  if (["已驳回", "执行失败"].includes(status)) return "fail";
+  return "running";
+}
+
+function buildCancelDetails(iccids) {
+  return iccids.map((iccid) => ({
+    iccid,
+    market: getCardMarket(iccid),
+    apiStatus: "-",
+    result: "待审核",
+    failReason: ""
+  }));
+}
+
+function getCardCancelSessionOperator() {
+  return document.querySelector(".profile span")?.textContent?.trim() || "admin";
+}
+
+function isCardCancelCustomerOperator(operator) {
+  return String(operator || "").startsWith("客户");
+}
+
+function getCardCancelBatchFailReason(row) {
+  if (row.result === "已驳回") return row.rejectReason || "—";
+  if (row.result === "执行失败") return row.batchFailReason || "部分卡片注销失败";
+  return "—";
+}
+
+function syncCardCancelBatchFromDetails(log) {
+  const details = log.details || [];
+  if (!details.length || ["待审核", "已驳回"].includes(log.result)) return;
+  const failCount = details.filter((item) => CARD_CANCEL_DETAIL_FAIL_RESULTS.includes(item.result)).length;
+  const pendingCount = details.filter((item) => item.result === "待执行").length;
+  const successCount = details.filter((item) => item.result === "执行成功").length;
+  log.failCount = failCount;
+  log.successCount = successCount + pendingCount;
+  if (failCount > 0) {
+    log.result = "执行失败";
+    if (!log.batchFailReason) {
+      log.batchFailReason = failCount < details.length
+        ? "部分卡片注销失败"
+        : (details.find((item) => item.result === "执行失败")?.failReason || "卡片注销失败");
+    }
+  } else if (pendingCount > 0) {
+    log.result = "待执行";
+  } else if (successCount === details.length) {
+    log.result = "执行成功";
+  }
+}
+
+function getCardCancelCardExecutedAt(batch, detail) {
+  if (detail.result === "执行成功" || batch.result === "执行成功") return batch.effectiveAt || batch.auditAt || "—";
+  if (detail.result === "待执行" || batch.result === "待执行") return batch.effectiveAt || "—";
+  if (batch.result === "已驳回" || detail.result === "已驳回") return batch.auditAt || "—";
+  if (batch.result === "待审核" || detail.result === "待审核") return "—";
+  if (detail.result === "执行失败" || batch.result === "执行失败") return batch.auditAt || batch.applyAt || "—";
+  return batch.auditAt || batch.applyAt || "—";
+}
+
+function flattenCardCancelOperationLogs() {
+  const rows = [];
+  cardCancelLogs.forEach((batch) => {
+    (batch.details || []).forEach((detail) => {
+      rows.push({
+        iccid: detail.iccid,
+        batchNo: batch.batchNo,
+        operator: batch.operator,
+        customerName: batch.customerName,
+        status: detail.result,
+        failReason: getCardCancelDetailFailReason(detail),
+        executedAt: getCardCancelCardExecutedAt(batch, detail),
+        applyAt: batch.applyAt,
+        auditAt: batch.auditAt || "—",
+        auditor: batch.auditor || "—"
+      });
+    });
+  });
+  return rows.sort((a, b) => `${b.executedAt}${b.applyAt}`.localeCompare(`${a.executedAt}${a.applyAt}`));
+}
+
+function findManagedCard(iccid) {
+  return packageRenewals.find((item) => item.iccid === iccid);
+}
+
+const deviceOperationActionIds = { cancel: 3 };
+
+function getDeviceOperationActionId(action) {
+  if (!deviceOperationActionIds[action]) {
+    const used = Object.values(deviceOperationActionIds);
+    deviceOperationActionIds[action] = (used.length ? Math.max(...used) : 0) + 1;
+  }
+  return deviceOperationActionIds[action];
+}
+
+function appendDeviceOperationLog(entry) {
+  deviceOperationLogs.unshift({
+    id: getDeviceOperationActionId(entry.action),
+    ...entry
+  });
+}
+
+function appendCardCancelDeviceLogIfTerminal(detail, batch) {
+  if (detail.result === "执行成功") {
+    appendDeviceOperationLog({
+      iccid: detail.iccid,
+      operatedAt: batch.effectiveAt || batch.auditAt || batch.applyAt,
+      operator: batch.auditor || batch.operator || "系统",
+      action: "cancel",
+      content: "卡片注销",
+      result: "注销成功"
+    });
+    return;
+  }
+  if (detail.result === "执行失败") {
+    appendDeviceOperationLog({
+      iccid: detail.iccid,
+      operatedAt: batch.effectiveAt || batch.auditAt || batch.applyAt,
+      operator: batch.auditor || batch.operator || "系统",
+      action: "cancel",
+      content: "卡片注销",
+      result: "注销失败"
+    });
+  }
+}
+
+function buildCardCancelDeviceOperationLogsFromBatches(batches) {
+  const rows = [];
+  batches.forEach((batch) => {
+    (batch.details || []).forEach((detail) => {
+      if (detail.result === "执行成功") {
+        rows.push({
+          iccid: detail.iccid,
+          operatedAt: batch.effectiveAt || batch.auditAt || batch.applyAt,
+          operator: batch.auditor || batch.operator || "系统",
+          action: "cancel",
+          content: "卡片注销",
+          result: "注销成功"
+        });
+      } else if (detail.result === "执行失败") {
+        rows.push({
+          iccid: detail.iccid,
+          operatedAt: batch.effectiveAt || batch.auditAt || batch.applyAt,
+          operator: batch.auditor || batch.operator || "系统",
+          action: "cancel",
+          content: "卡片注销",
+          result: "注销失败"
+        });
+      }
+    });
+  });
+  return rows;
+}
+
+function applyCancelStatusToCards(iccids) {
+  iccids.forEach((iccid) => {
+    const card = findManagedCard(iccid);
+    if (card) card.status = "cancel";
+  });
+}
+
+function executeApprovedCardCancel(log) {
+  const effectiveAt = getCancelEffectiveAt();
+  log.effectiveAt = effectiveAt;
+  log.details.forEach((detail) => {
+    if (detail.result === "执行失败") return;
+    if (detail.market === "英国") {
+      detail.apiStatus = "注销 API 已调用，英国平台已同步";
+    } else {
+      detail.apiStatus = "-";
+    }
+    detail.result = "待执行";
+  });
+  syncCardCancelBatchFromDetails(log);
+  log.details.forEach((detail) => {
+    appendCardCancelDeviceLogIfTerminal(detail, log);
+  });
+}
+
+const cardCancelLogs = [
+  {
+    id: 1,
+    batchNo: "CC202610150001",
+    operator: "客户-王利",
+    customerName: "万利通信技术（深圳）有限公司",
+    type: "批量",
+    fileName: "wanli_cancel_20261015.xlsx",
+    iccids: ["89860404112026062409"],
+    totalCount: 1,
+    successCount: 0,
+    failCount: 0,
+    result: "待审核",
+    applyAt: "2026-10-15 09:16:42",
+    auditAt: "",
+    auditor: "",
+    effectiveAt: "",
+    rejectReason: "",
+    needAudit: true,
+    details: buildCancelDetails(["89860404112026062409"])
+  },
+  {
+    id: 5,
+    batchNo: "CC202610140002",
+    operator: "客户-赵敏",
+    customerName: "中亿（深圳）信息科技有限公司",
+    type: "批量",
+    fileName: "zhongyi_cancel_batch_20261014.xlsx",
+    iccids: ["89860404112026062903", "89860404112026062904", "89860404112026062905"],
+    totalCount: 3,
+    successCount: 0,
+    failCount: 0,
+    result: "待审核",
+    applyAt: "2026-10-14 11:28:06",
+    auditAt: "",
+    auditor: "",
+    effectiveAt: "",
+    rejectReason: "",
+    needAudit: true,
+    details: buildCancelDetails(["89860404112026062903", "89860404112026062904", "89860404112026062905"])
+  },
+  {
+    id: 6,
+    batchNo: "CC202610130003",
+    operator: "客户-王利",
+    customerName: "万利通信技术（深圳）有限公司",
+    type: "批量",
+    fileName: "wanli_cancel_pending_20261013.xls",
+    iccids: ["89860404112026062310", "89860404112026062311"],
+    totalCount: 2,
+    successCount: 0,
+    failCount: 0,
+    result: "待审核",
+    applyAt: "2026-10-13 16:45:33",
+    auditAt: "",
+    auditor: "",
+    effectiveAt: "",
+    rejectReason: "",
+    needAudit: true,
+    details: buildCancelDetails(["89860404112026062310", "89860404112026062311"])
+  },
+  {
+    id: 2,
+    batchNo: "CC202609180001",
+    operator: "客户-王利",
+    customerName: "万利通信技术（深圳）有限公司",
+    type: "批量",
+    fileName: "wanli_cancel_uk_20260918.xlsx",
+    iccids: [DEMO_DEVICE_ICCID],
+    totalCount: 1,
+    successCount: 1,
+    failCount: 0,
+    result: "待执行",
+    applyAt: "2026-09-18 10:08:31",
+    auditAt: "2026-09-18 11:06:22",
+    auditor: "李明",
+    effectiveAt: "2026-10-01 00:00:00",
+    rejectReason: "",
+    needAudit: true,
+    details: [{ iccid: DEMO_DEVICE_ICCID, market: "英国", apiStatus: "注销 API 已调用，英国平台已同步", result: "待执行", failReason: "" }]
+  },
+  {
+    id: 7,
+    batchNo: "CC202610080004",
+    operator: "admin",
+    customerName: "中亿（深圳）信息科技有限公司",
+    type: "批量",
+    fileName: "zhongyi_admin_cancel_20261008.xlsx",
+    iccids: ["89860404112026062903"],
+    totalCount: 1,
+    successCount: 1,
+    failCount: 0,
+    result: "待执行",
+    applyAt: "2026-10-08 09:12:44",
+    auditAt: "",
+    auditor: "",
+    effectiveAt: "2026-11-01 00:00:00",
+    rejectReason: "",
+    needAudit: false,
+    details: [{ iccid: "89860404112026062903", market: "巴西", apiStatus: "-", result: "待执行", failReason: "" }]
+  },
+  {
+    id: 8,
+    batchNo: "CC202610050005",
+    operator: "客户-赵敏",
+    customerName: "天翼物联",
+    type: "批量",
+    fileName: "tianyi_cancel_br_20261005.xlsx",
+    iccids: ["89860404112026062706", "89860404112026062707"],
+    totalCount: 2,
+    successCount: 2,
+    failCount: 0,
+    result: "待执行",
+    applyAt: "2026-10-05 14:20:18",
+    auditAt: "2026-10-05 15:08:52",
+    auditor: "赵红",
+    effectiveAt: "2026-11-01 00:00:00",
+    rejectReason: "",
+    needAudit: true,
+    details: [
+      { iccid: "89860404112026062706", market: "巴西", apiStatus: "-", result: "待执行", failReason: "" },
+      { iccid: "89860404112026062707", market: "巴西", apiStatus: "-", result: "待执行", failReason: "" }
+    ]
+  },
+  {
+    id: 3,
+    batchNo: "CC202608200002",
+    operator: "admin",
+    customerName: "中亿（深圳）信息科技有限公司",
+    type: "批量",
+    fileName: "zhongyi_cancel_20260820.xlsx",
+    iccids: ["89860404112026063001", "89860404112026063002"],
+    totalCount: 2,
+    successCount: 2,
+    failCount: 0,
+    result: "执行成功",
+    applyAt: "2026-08-20 14:22:09",
+    auditAt: "",
+    auditor: "",
+    effectiveAt: "2026-09-01 00:00:00",
+    rejectReason: "",
+    needAudit: false,
+    details: [
+      { iccid: "89860404112026063001", market: "巴西", apiStatus: "-", result: "执行成功", failReason: "" },
+      { iccid: "89860404112026063002", market: "巴西", apiStatus: "-", result: "执行成功", failReason: "" }
+    ]
+  },
+  {
+    id: 9,
+    batchNo: "CC202607150006",
+    operator: "客户-王利",
+    customerName: "万利通信技术（深圳）有限公司",
+    type: "批量",
+    fileName: "wanli_cancel_done_20260715.xlsx",
+    iccids: ["89860404112026062310"],
+    totalCount: 1,
+    successCount: 1,
+    failCount: 0,
+    result: "执行成功",
+    applyAt: "2026-07-15 10:33:27",
+    auditAt: "2026-07-15 11:05:41",
+    auditor: "李明",
+    effectiveAt: "2026-08-01 00:00:00",
+    rejectReason: "",
+    needAudit: true,
+    details: [{ iccid: "89860404112026062310", market: "巴西", apiStatus: "-", result: "执行成功", failReason: "" }]
+  },
+  {
+    id: 10,
+    batchNo: "CC202606280007",
+    operator: "admin",
+    customerName: "万利通信技术（深圳）有限公司",
+    type: "批量",
+    fileName: "wanli_uk_cancel_done_20260628.xlsx",
+    iccids: ["89444610503500051172"],
+    totalCount: 1,
+    successCount: 1,
+    failCount: 0,
+    result: "执行成功",
+    applyAt: "2026-06-28 08:56:12",
+    auditAt: "",
+    auditor: "",
+    effectiveAt: "2026-07-01 00:00:00",
+    rejectReason: "",
+    needAudit: false,
+    details: [{ iccid: "89444610503500051172", market: "英国", apiStatus: "英国平台已确认注销", result: "执行成功", failReason: "" }]
+  },
+  {
+    id: 4,
+    batchNo: "CC202610100003",
+    operator: "客户-赵敏",
+    customerName: "天翼物联",
+    type: "批量",
+    fileName: "tianyi_cancel_20261010.xlsx",
+    iccids: ["89860404112026062706"],
+    totalCount: 1,
+    successCount: 0,
+    failCount: 1,
+    result: "已驳回",
+    applyAt: "2026-10-10 16:06:38",
+    auditAt: "2026-10-10 16:15:14",
+    auditor: "钱强",
+    effectiveAt: "",
+    rejectReason: "存在未结清账单，暂不允许注销",
+    needAudit: true,
+    details: [{
+      iccid: "89860404112026062706",
+      market: "巴西",
+      apiStatus: "-",
+      result: "已驳回",
+      failReason: "存在未结清账单，暂不允许注销"
+    }]
+  },
+  {
+    id: 11,
+    batchNo: "CC202609220008",
+    operator: "客户-王利",
+    customerName: "万利通信技术（深圳）有限公司",
+    type: "批量",
+    fileName: "wanli_cancel_reject_20260922.xls",
+    iccids: ["89860404112026062409", "89860404112026062410"],
+    totalCount: 2,
+    successCount: 0,
+    failCount: 2,
+    result: "已驳回",
+    applyAt: "2026-09-22 13:40:55",
+    auditAt: "2026-09-22 14:02:19",
+    auditor: "赵红",
+    effectiveAt: "",
+    rejectReason: "上传 ICCID 与所选客户归属不一致",
+    needAudit: true,
+    details: [
+      { iccid: "89860404112026062409", market: "巴西", apiStatus: "-", result: "已驳回", failReason: "上传 ICCID 与所选客户归属不一致" },
+      { iccid: "89860404112026062410", market: "巴西", apiStatus: "-", result: "已驳回", failReason: "上传 ICCID 与所选客户归属不一致" }
+    ]
+  },
+  {
+    id: 12,
+    batchNo: "CC202609250009",
+    operator: "客户-王利",
+    customerName: "万利通信技术（深圳）有限公司",
+    type: "批量",
+    fileName: "wanli_cancel_uk_fail_20260925.xlsx",
+    iccids: ["89444610503500051180", "89444610503500051181"],
+    totalCount: 2,
+    successCount: 0,
+    failCount: 2,
+    result: "执行失败",
+    batchFailReason: "英国平台注销 API 响应超时",
+    applyAt: "2026-09-25 15:30:00",
+    auditAt: "2026-09-25 16:02:18",
+    auditor: "赵红",
+    effectiveAt: "",
+    rejectReason: "",
+    needAudit: true,
+    details: [
+      { iccid: "89444610503500051180", market: "英国", apiStatus: "API 调用失败", result: "执行失败", failReason: "英国平台注销 API 响应超时" },
+      { iccid: "89444610503500051181", market: "英国", apiStatus: "API 调用失败", result: "执行失败", failReason: "ICCID 在英国平台不存在" }
+    ]
+  },
+  {
+    id: 13,
+    batchNo: "CC202609120010",
+    operator: "admin",
+    customerName: "天翼物联",
+    type: "批量",
+    fileName: "tianyi_cancel_partial_fail_20260912.xlsx",
+    iccids: ["89860404112026062805", "89444610503500051173"],
+    totalCount: 2,
+    successCount: 1,
+    failCount: 1,
+    result: "执行失败",
+    batchFailReason: "部分卡片注销失败",
+    applyAt: "2026-09-12 10:18:44",
+    auditAt: "",
+    auditor: "",
+    effectiveAt: "2026-10-01 00:00:00",
+    rejectReason: "",
+    needAudit: false,
+    details: [
+      { iccid: "89860404112026062805", market: "巴西", apiStatus: "-", result: "执行成功", failReason: "" },
+      { iccid: "89444610503500051173", market: "英国", apiStatus: "英国平台状态校验失败", result: "执行失败", failReason: "英国平台返回：卡片处于测试期，不可注销" }
+    ]
+  }
+];
+
+cardCancelLogs.filter((log) => log.result === "执行成功").forEach((log) => applyCancelStatusToCards(
+  (log.details || []).filter((detail) => detail.result === "执行成功").map((detail) => detail.iccid)
+));
+
+const deviceOperationLogs = [
+  ...buildCardCancelDeviceOperationLogsFromBatches(cardCancelLogs),
+  {
+    iccid: DEMO_DEVICE_ICCID,
+    operatedAt: "2026-09-25 16:02:18",
+    operator: "赵红",
+    action: "cancel",
+    content: "卡片注销",
+    result: "注销失败"
+  },
+  {
+    iccid: DEMO_DEVICE_ICCID,
+    operatedAt: "2026-10-01 00:00:00",
+    operator: "李明",
+    action: "cancel",
+    content: "卡片注销",
+    result: "注销成功"
+  }
+]
+  .sort((a, b) => `${b.operatedAt}`.localeCompare(`${a.operatedAt}`))
+  .map((row) => ({ id: getDeviceOperationActionId(row.action), ...row }));
 
 const iccidPackageLookup = {
   "89860404112026063001": { customerName: "中亿（深圳）信息科技有限公司", packageName: "Z1_PAYG_25GB", packageType: "Monthly PAYG" },
@@ -887,12 +1401,14 @@ const state = {
     monthlyBill: {},
     billDetail: {},
     poolBill: {},
-    usageDetail: {}
+    usageDetail: {},
+    cardCancel: {}
   },
   smsCreatedAtSort: "desc",
   selectedBlacklist: new Set(),
   selectedPackageModifyDetails: new Set(),
   selectedPackageRenewalAudits: new Set(),
+  selectedCardCancelAudits: new Set(),
   selectedPackageQuotes: new Set(),
   selectedDataPoolCards: new Set(),
   selectedBillNo: null,
@@ -974,6 +1490,11 @@ const moduleMeta = {
   dataPoolCards: {
     title: "流量池详情",
     desc: "查看流量池内的池卡信息。",
+    parent: "服务设备"
+  },
+  cardCancel: {
+    title: "卡片注销",
+    desc: "客户提交注销申请，管理员审核后次月执行；管理员可直接注销。",
     parent: "服务设备"
   },
   monthlyBill: {
@@ -1197,6 +1718,26 @@ function renderFilter() {
         ${fieldSelect("客户名称", "customerName", customerOptions, filters.customerName)}
         <label class="field">
           <span>到期时间</span>
+          <div class="range-row">
+            <input type="date" name="startDate" value="${filters.startDate || ""}">
+            <input type="date" name="endDate" value="${filters.endDate || ""}">
+          </div>
+        </label>
+        ${commonActions}
+      </form>
+    `;
+  }
+
+  if (state.module === "cardCancel") {
+    const filters = state.filters.cardCancel;
+    filterCard.innerHTML = `
+      <form id="filterForm" class="filter-grid package-renewal-log-filter card-cancel-filter">
+        ${fieldSelect("申请人", "operator", cardCancelOperatorOptions, filters.operator)}
+        ${fieldInput("批次号", "batchNo", filters.batchNo)}
+        ${fieldDatalist("客户名称", "customerName", filters.customerName, customerOptions)}
+        ${fieldSelect("状态", "result", ["待审核", "已驳回", "待执行", "执行成功", "执行失败"], filters.result)}
+        <label class="field">
+          <span>申请时间</span>
           <div class="range-row">
             <input type="date" name="startDate" value="${filters.startDate || ""}">
             <input type="date" name="endDate" value="${filters.endDate || ""}">
@@ -1543,6 +2084,31 @@ function renderToolbar() {
     $("#packageRenewalLogBtn").addEventListener("click", () => openPackageRenewalLogModal());
   }
 
+  if (state.module === "cardCancel") {
+    toolbar.innerHTML = `
+      <button class="btn primary" id="cardCancelBtn">注销</button>
+      <button class="btn primary" id="approveCardCancelBtn" disabled>审核通过</button>
+      <button class="btn orange" id="cardCancelLogBtn">操作日志</button>
+    `;
+    $("#cardCancelBtn").addEventListener("click", () => openCardCancelModal());
+    $("#cardCancelLogBtn").addEventListener("click", () => openCardCancelLogModal());
+    $("#approveCardCancelBtn").addEventListener("click", () => {
+      const selectedRows = cardCancelLogs.filter((row) => row.result === "待审核" && state.selectedCardCancelAudits.has(row.id));
+      if (!selectedRows.length) return;
+      confirmAction("确认通过", `是否确认通过 ${selectedRows.length} 条注销申请？审核通过后按卡类型执行注销，次月 1 日执行。`, () => {
+        const auditAt = formatDateTime(new Date());
+        selectedRows.forEach((row) => {
+          row.auditAt = auditAt;
+          row.auditor = "李明";
+          executeApprovedCardCancel(row);
+        });
+        state.selectedCardCancelAudits.clear();
+        render();
+        showToast("注销申请已通过");
+      });
+    });
+  }
+
   if (state.module === "packageRenewalAudit") {
     toolbar.innerHTML = `<button class="btn primary" id="approveRenewalAuditBtn" disabled>通过</button>`;
     $("#approveRenewalAuditBtn").addEventListener("click", () => {
@@ -1687,6 +2253,12 @@ function renderTable() {
     return;
   }
 
+  if (state.module === "device" && state.deviceTab === "log") {
+    renderDeviceOperationLogPage();
+    $("#pagination").innerHTML = "";
+    return;
+  }
+
   if (state.module === "device" && state.deviceTab !== "smsSession") {
     renderDevicePlaceholder();
     $("#pagination").innerHTML = "";
@@ -1700,6 +2272,7 @@ function renderTable() {
   if (state.module === "packageModify") renderPackageModifyTable(pageRows);
   if (state.module === "packageRenewal") renderPackageRenewalTable(pageRows);
   if (state.module === "packageRenewalAudit") renderPackageRenewalAuditTable(pageRows);
+  if (state.module === "cardCancel") renderCardCancelTable(pageRows);
   if (state.module === "packageQuote") renderPackageQuoteTable(pageRows);
   if (state.module === "packageRemainingQuota") renderPackageRemainingQuotaTable(pageRows);
   if (state.module === "dataPool") renderDataPoolTable(pageRows);
@@ -1875,6 +2448,21 @@ function getFilteredRows() {
         && (!filters.startDate || row.originalExpiryDate >= filters.startDate)
         && (!filters.endDate || row.originalExpiryDate <= filters.endDate))
       .sort((a, b) => a.originalExpiryDate.localeCompare(b.originalExpiryDate));
+  }
+
+  if (state.module === "cardCancel") {
+    const filters = state.filters.cardCancel;
+    return cardCancelLogs.filter((row) => {
+      const applyDate = row.applyAt.slice(0, 10);
+      const inStart = !filters.startDate || applyDate >= filters.startDate;
+      const inEnd = !filters.endDate || applyDate <= filters.endDate;
+      return matchExact(row.operator, filters.operator)
+        && includes(row.batchNo, filters.batchNo)
+        && includes(row.customerName, filters.customerName)
+        && matchExact(row.result, filters.result)
+        && inStart
+        && inEnd;
+    }).sort((a, b) => b.applyAt.localeCompare(a.applyAt));
   }
 
   if (state.module === "packageRenewalAudit") {
@@ -2095,6 +2683,8 @@ function renderDeviceDetailPage() {
   const currentMonth = now.getMonth() + 1;
   const monthValue = `${currentYear}-${String(currentMonth).padStart(2, "0")}`;
   const smsRows = getDeviceSmsUsageRows(currentYear, currentMonth);
+  const demoCard = findManagedCard(DEMO_DEVICE_ICCID);
+  const demoStatus = demoCard?.status || "active";
 
   $("#tableHead").innerHTML = "";
   $("#tableBody").innerHTML = `
@@ -2106,7 +2696,7 @@ function renderDeviceDetailPage() {
             <div class="device-info-grid">
               ${deviceInfoItem("设备ID", "43_SO26032604_051171")}
               ${deviceInfoItem("类型", "Main Dev")}
-              ${deviceInfoItem("状态", "active")}
+              ${deviceInfoItem("状态", demoStatus)}
               ${deviceInfoItem("承诺时间", "2026-03-26")}
               ${deviceInfoItem("ICCID", "89444610503500051171")}
               ${deviceInfoItem("单次上网IMEI", "8663140763101716")}
@@ -2211,6 +2801,30 @@ function renderDevicePlaceholder() {
       </td>
     </tr>
   `;
+}
+
+function renderDeviceOperationLogPage() {
+  const rows = deviceOperationLogs.filter((row) => row.iccid === DEMO_DEVICE_ICCID);
+  $("#tableHead").innerHTML = `
+    <tr>
+      <th>操作ID</th>
+      <th>操作内容</th>
+      <th>操作人</th>
+      <th>操作时间</th>
+      <th>操作类型</th>
+      <th>操作结果</th>
+    </tr>
+  `;
+  $("#tableBody").innerHTML = rows.length ? rows.map((row) => `
+    <tr>
+      <td>${row.id}</td>
+      <td class="content-cell" title="${escapeAttr(row.content)}">${row.content}</td>
+      <td>${row.operator}</td>
+      <td>${row.operatedAt}</td>
+      <td>${row.action}</td>
+      <td>${row.result}</td>
+    </tr>
+  `).join("") : emptyRow(6);
 }
 
 function deviceInfoItem(label, value) {
@@ -4104,6 +4718,353 @@ function updateRenewalAuditApproveButton() {
   if (button) button.disabled = state.selectedPackageRenewalAudits.size === 0;
 }
 
+function updateCardCancelApproveButton() {
+  const button = $("#approveCardCancelBtn");
+  if (button) button.disabled = state.selectedCardCancelAudits.size === 0;
+}
+
+function getMockCancelIccids(customerName) {
+  return packageRenewals
+    .filter((card) => card.customerName === customerName && card.status !== "cancel")
+    .map((card) => card.iccid)
+    .slice(0, 3);
+}
+
+function createCardCancelBatch({ customerName, fileName, needAudit, operator, sourceFile }) {
+  const iccids = getMockCancelIccids(customerName);
+  if (!iccids.length) return null;
+  const now = new Date();
+  const batchNo = `CC${formatDate(now).replaceAll("-", "")}${String(cardCancelLogs.length + 1).padStart(4, "0")}`;
+  const log = {
+    id: cardCancelLogs.length ? Math.max(...cardCancelLogs.map((item) => item.id)) + 1 : 1,
+    batchNo,
+    operator,
+    customerName,
+    type: "批量",
+    fileName,
+    sourceFile: sourceFile || null,
+    iccids,
+    totalCount: iccids.length,
+    successCount: 0,
+    failCount: 0,
+    result: needAudit ? "待审核" : "待执行",
+    applyAt: formatDateTime(now),
+    auditAt: "",
+    auditor: "",
+    effectiveAt: needAudit ? "" : getCancelEffectiveAt(now),
+    rejectReason: "",
+    needAudit,
+    details: buildCancelDetails(iccids)
+  };
+  cardCancelLogs.unshift(log);
+  if (!needAudit) {
+    executeApprovedCardCancel(log);
+    log.auditAt = "";
+    log.auditor = "";
+  }
+  return log;
+}
+
+function renderCardCancelTable(rows) {
+  const pendingRows = rows.filter((row) => row.result === "待审核");
+  const selectedPendingCount = pendingRows.filter((row) => state.selectedCardCancelAudits.has(row.id)).length;
+  $("#tableHead").innerHTML = `
+    <tr>
+      <th><input type="checkbox" class="checkbox" id="cardCancelCheckAll" ${pendingRows.length && selectedPendingCount === pendingRows.length ? "checked" : ""} ${pendingRows.length ? "" : "disabled"}></th>
+      <th>批次号</th>
+      <th>申请人</th>
+      <th>客户名称</th>
+      <th>注销文件</th>
+      <th>注销总数</th>
+      <th>成功数</th>
+      <th>失败数</th>
+      <th>状态</th>
+      <th>失败原因</th>
+      <th>申请时间</th>
+      <th>审核时间</th>
+      <th>执行时间</th>
+      <th>审核人</th>
+      <th>操作</th>
+    </tr>
+  `;
+  $("#tableBody").innerHTML = rows.length ? rows.map((row) => `
+    <tr>
+      <td>${row.result === "待审核"
+        ? `<input type="checkbox" class="checkbox" data-card-cancel-id="${row.id}" ${state.selectedCardCancelAudits.has(row.id) ? "checked" : ""}>`
+        : `<input type="checkbox" class="checkbox" disabled>`}</td>
+      <td>${row.batchNo}</td>
+      <td>${row.operator}</td>
+      <td>${row.customerName}</td>
+      <td class="content-cell" title="${escapeAttr(row.fileName)}"><button type="button" class="file-download-btn" data-download-card-cancel-file="${row.id}">${row.fileName}</button></td>
+      <td>${row.totalCount}</td>
+      <td>${row.successCount ?? 0}</td>
+      <td>${row.failCount ?? 0}</td>
+      <td><span class="status ${getCardCancelStatusBadgeClass(row.result)}">${row.result}</span></td>
+      <td class="content-cell" title="${escapeAttr(getCardCancelBatchFailReason(row))}">${getCardCancelBatchFailReason(row)}</td>
+      <td>${row.applyAt}</td>
+      <td>${row.auditAt || "—"}</td>
+      <td>${row.effectiveAt || "—"}</td>
+      <td>${row.auditor || "—"}</td>
+      <td>
+        <div class="op-group">
+          <button type="button" class="op-btn" data-card-cancel-detail="${row.id}">明细</button>
+          ${row.result === "待审核"
+            ? `<button type="button" class="op-btn" data-approve-card-cancel="${row.id}">通过</button><button type="button" class="op-btn danger" data-reject-card-cancel="${row.id}">驳回</button>`
+            : ""}
+        </div>
+      </td>
+    </tr>
+  `).join("") : emptyRow(15);
+
+  $$("[data-download-card-cancel-file]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const row = cardCancelLogs.find((item) => String(item.id) === button.dataset.downloadCardCancelFile);
+      if (row) downloadCardCancelFile(row);
+    });
+  });
+
+  const checkAll = $("#cardCancelCheckAll");
+  if (checkAll) {
+    checkAll.indeterminate = selectedPendingCount > 0 && selectedPendingCount < pendingRows.length;
+    checkAll.addEventListener("change", (event) => {
+      pendingRows.forEach((row) => {
+        if (event.target.checked) state.selectedCardCancelAudits.add(row.id);
+        else state.selectedCardCancelAudits.delete(row.id);
+      });
+      renderCardCancelTable(rows);
+      updateCardCancelApproveButton();
+    });
+  }
+  $$("[data-card-cancel-id]").forEach((checkbox) => {
+    checkbox.addEventListener("change", () => {
+      const id = Number(checkbox.dataset.cardCancelId);
+      if (checkbox.checked) state.selectedCardCancelAudits.add(id);
+      else state.selectedCardCancelAudits.delete(id);
+      renderCardCancelTable(rows);
+      updateCardCancelApproveButton();
+    });
+  });
+  $$("[data-card-cancel-detail]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const row = cardCancelLogs.find((item) => String(item.id) === button.dataset.cardCancelDetail);
+      if (row) openCardCancelDetailModal(row);
+    });
+  });
+  $$("[data-approve-card-cancel]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const row = cardCancelLogs.find((item) => String(item.id) === button.dataset.approveCardCancel);
+      if (!row) return;
+      confirmAction("确认通过", "英国卡将调用 API 并同步英国平台；巴西卡进入待执行。次月 1 日执行后状态为 cancel。", () => {
+        row.auditAt = formatDateTime(new Date());
+        row.auditor = "李明";
+        executeApprovedCardCancel(row);
+        state.selectedCardCancelAudits.delete(row.id);
+        render();
+        showToast("注销申请已通过");
+      });
+    });
+  });
+  $$("[data-reject-card-cancel]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const row = cardCancelLogs.find((item) => String(item.id) === button.dataset.rejectCardCancel);
+      if (row) openCardCancelRejectModal(row, () => {
+        state.selectedCardCancelAudits.delete(row.id);
+        render();
+      });
+    });
+  });
+  updateCardCancelApproveButton();
+}
+
+function openCardCancelModal() {
+  const operator = getCardCancelSessionOperator();
+  const needAudit = isCardCancelCustomerOperator(operator);
+  const fragment = $("#cardCancelModalTemplate").content.cloneNode(true);
+  const form = fragment.querySelector("#cardCancelForm");
+  const submitBtn = fragment.querySelector("#cardCancelSubmitBtn");
+  const tip = fragment.querySelector("#cardCancelModalTip");
+  if (tip) {
+    if (needAudit) {
+      tip.hidden = false;
+      tip.textContent = "客户提交需管理员审核，审核通过后次月 1 日执行；执行后 ICCID 状态为 cancel，关联套餐失效。";
+    } else {
+      tip.hidden = true;
+      tip.textContent = "";
+    }
+  }
+  if (submitBtn) submitBtn.textContent = needAudit ? "提交申请" : "确定注销";
+  const customerSelect = form.elements.customerName;
+  customerSelect.innerHTML = `
+    <option value="">请选择</option>
+    ${customerOptions.map((name) => `<option value="${escapeAttr(name)}">${name}</option>`).join("")}
+  `;
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const customerName = form.elements.customerName.value;
+    const file = form.elements.batchFile.files[0];
+    if (!customerName || !file) {
+      showToast("请完整填写注销信息");
+      return;
+    }
+    const log = createCardCancelBatch({
+      customerName,
+      fileName: file.name,
+      needAudit,
+      operator,
+      sourceFile: file
+    });
+    if (!log) {
+      showToast("该客户下没有可注销的卡片");
+      return;
+    }
+    closeModal(form.closest(".modal"));
+    render();
+    showToast(needAudit ? "注销申请已提交，待管理员审核" : "注销已受理，次月 1 日执行");
+  });
+  openModal(fragment);
+}
+
+function openCardCancelRejectModal(row, onRejected) {
+  const fragment = $("#cardCancelRejectModalTemplate").content.cloneNode(true);
+  const modal = fragment.querySelector(".modal");
+  const form = fragment.querySelector("#cardCancelRejectForm");
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const rejectReason = form.elements.rejectReason.value.trim();
+    if (!rejectReason) {
+      showToast("请输入驳回原因");
+      return;
+    }
+    row.result = "已驳回";
+    row.rejectReason = rejectReason;
+    row.failCount = row.totalCount;
+    row.successCount = 0;
+    row.details.forEach((detail) => {
+      detail.result = "已驳回";
+      detail.failReason = rejectReason;
+    });
+    row.auditAt = formatDateTime(new Date());
+    row.auditor = "李明";
+    closeModal(modal);
+    onRejected();
+    showToast("已驳回注销申请");
+  });
+  openModal(fragment, true);
+}
+
+function exportCardCancelDetail(row) {
+  const details = row.details || [];
+  if (!details.length) {
+    showToast("暂无注销明细");
+    return;
+  }
+  const headers = ["ICCID", "注销结果", "失败原因"];
+  const rows = details.map((detail) => [
+    detail.iccid,
+    CARD_CANCEL_DETAIL_FAIL_RESULTS.includes(detail.result) ? "失败" : "成功",
+    CARD_CANCEL_DETAIL_FAIL_RESULTS.includes(detail.result) ? (detail.failReason || "注销失败") : "--"
+  ]);
+  downloadBlob(
+    createXlsxFile(headers, rows),
+    `注销明细_${row.batchNo}.xlsx`,
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  );
+  showToast("导出成功");
+}
+
+function openCardCancelDetailModal(row) {
+  const fragment = $("#cardCancelDetailModalTemplate").content.cloneNode(true);
+  fragment.querySelector("#cardCancelDetailSummary").innerHTML = `
+    <div class="iccid-lookup-item"><span>批次号</span><strong>${row.batchNo}</strong></div>
+    <div class="iccid-lookup-item"><span>客户名称</span><strong>${row.customerName}</strong></div>
+    <div class="iccid-lookup-item"><span>状态</span><strong>${row.result}</strong></div>
+    <div class="iccid-lookup-item"><span>执行时间</span><strong>${row.effectiveAt || "—"}</strong></div>
+    ${row.rejectReason ? `<div class="iccid-lookup-item"><span>驳回原因</span><strong>${row.rejectReason}</strong></div>` : ""}
+  `;
+  fragment.querySelector("#cardCancelDetailBody").innerHTML = row.details.length ? row.details.map((detail) => {
+    const failReason = getCardCancelDetailFailReason(detail);
+    return `
+    <tr>
+      <td>${detail.iccid}</td>
+      <td>${detail.result}</td>
+      <td class="content-cell" title="${escapeAttr(failReason)}">${failReason}</td>
+    </tr>
+  `;
+  }).join("") : emptyRow(3);
+  fragment.querySelector("#cardCancelDetailExport").addEventListener("click", () => exportCardCancelDetail(row));
+  openModal(fragment);
+}
+
+function openCardCancelLogModal() {
+  const fragment = $("#cardCancelLogModalTemplate").content.cloneNode(true);
+  const form = fragment.querySelector("#cardCancelLogFilter");
+  const body = fragment.querySelector("#cardCancelLogBody");
+  const pagination = fragment.querySelector("#cardCancelLogPagination");
+  const customerList = fragment.querySelector("#cardCancelLogCustomerOptions");
+  customerList.innerHTML = customerOptions.map((name) => `<option value="${escapeAttr(name)}"></option>`).join("");
+  const logState = { page: 1, pageSize: 10, filters: {} };
+
+  const getRows = () => flattenCardCancelOperationLogs().filter((row) => {
+    const applyDate = row.applyAt.slice(0, 10);
+    const inStart = !logState.filters.startDate || applyDate >= logState.filters.startDate;
+    const inEnd = !logState.filters.endDate || applyDate <= logState.filters.endDate;
+    return matchExact(row.operator, logState.filters.operator)
+      && includes(row.batchNo, logState.filters.batchNo)
+      && includes(row.iccid, logState.filters.iccid)
+      && includes(row.customerName, logState.filters.customerName)
+      && matchExact(row.status, logState.filters.status)
+      && inStart
+      && inEnd;
+  });
+
+  const renderRows = () => {
+    const rows = getRows();
+    const totalPages = Math.max(1, Math.ceil(rows.length / logState.pageSize));
+    if (logState.page > totalPages) logState.page = totalPages;
+    const pageRows = rows.slice((logState.page - 1) * logState.pageSize, logState.page * logState.pageSize);
+    body.innerHTML = pageRows.length ? pageRows.map((row) => `
+      <tr>
+        <td>${row.iccid}</td>
+        <td>${row.batchNo}</td>
+        <td>${row.operator}</td>
+        <td>${row.customerName}</td>
+        <td><span class="status ${getCardCancelStatusBadgeClass(row.status)}">${row.status}</span></td>
+        <td class="content-cell" title="${escapeAttr(row.failReason)}">${row.failReason}</td>
+        <td>${row.applyAt}</td>
+        <td>${row.auditAt}</td>
+        <td>${row.executedAt}</td>
+        <td>${row.auditor}</td>
+      </tr>
+    `).join("") : `<tr><td colspan="10">暂无数据</td></tr>`;
+    pagination.innerHTML = `
+      <span>共 ${rows.length} 条</span>
+      ${Array.from({ length: totalPages }, (_, index) => `<button type="button" class="page-btn ${index + 1 === logState.page ? "active" : ""}" data-card-cancel-log-page="${index + 1}">${index + 1}</button>`).join("")}
+    `;
+    $$("[data-card-cancel-log-page]", pagination).forEach((button) => {
+      button.addEventListener("click", () => {
+        logState.page = Number(button.dataset.cardCancelLogPage);
+        renderRows();
+      });
+    });
+  };
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    logState.filters = Object.fromEntries(new FormData(form).entries());
+    logState.page = 1;
+    renderRows();
+  });
+  fragment.querySelector("#resetCardCancelLog").addEventListener("click", () => {
+    form.reset();
+    logState.filters = {};
+    logState.page = 1;
+    renderRows();
+  });
+  fragment.querySelector("#exportCardCancelLog").addEventListener("click", () => exportCardCancelOperationLog(getRows()));
+  renderRows();
+  openModal(fragment);
+}
+
 function renderPackageModifyDetailTable(rows) {
   $("#tableHead").innerHTML = `
     <tr>
@@ -4266,15 +5227,20 @@ function emptyRow(colspan) {
 function openPrototypeDocsModal() {
   const fragment = $("#prototypeDocsModalTemplate").content.cloneNode(true);
   const modal = fragment.querySelector(".prototype-docs-modal");
-  modal.querySelectorAll("[data-doc-batch]").forEach((button) => {
+  modal.querySelectorAll("[data-doc-status]").forEach((button) => {
     button.addEventListener("click", () => {
-      const key = button.dataset.docBatch;
-      modal.querySelectorAll("[data-doc-batch]").forEach((item) => {
+      const key = button.dataset.docStatus;
+      modal.querySelectorAll("[data-doc-status]").forEach((item) => {
         item.classList.toggle("is-active", item === button);
       });
       modal.querySelectorAll("[data-doc-panel]").forEach((panel) => {
         panel.classList.toggle("is-active", panel.dataset.docPanel === key);
       });
+    });
+  });
+  modal.querySelectorAll("[data-doc-group]").forEach((group) => {
+    group.querySelector(".prototype-doc-group-head").addEventListener("click", () => {
+      group.classList.toggle("is-open");
     });
   });
   openModal(fragment);
@@ -5193,6 +6159,25 @@ function openPackageRenewalRejectModal(row, onRejected) {
   openModal(fragment, true);
 }
 
+function getPackageModifyMinEffectiveDate() {
+  const date = new Date();
+  date.setDate(1);
+  date.setHours(0, 0, 0, 0);
+  date.setMonth(date.getMonth() + 1);
+  return formatDate(date);
+}
+
+function configurePackageModifyEffectiveDateInput(input) {
+  if (!input) return;
+  input.min = getPackageModifyMinEffectiveDate();
+  input.value = "";
+}
+
+function isValidPackageModifyEffectiveDate(value) {
+  if (!value) return false;
+  return value >= getPackageModifyMinEffectiveDate();
+}
+
 function openPackageModifyModal(mode = "single") {
   const fragment = $("#packageModifyModalTemplate").content.cloneNode(true);
   const modal = fragment.querySelector(".modal");
@@ -5200,9 +6185,11 @@ function openPackageModifyModal(mode = "single") {
   const lookupResult = fragment.querySelector("#iccidLookupResult");
   const newPackageTypeSelect = fragment.querySelector("#newPackageTypeSelect");
   const newPackageNameSelect = fragment.querySelector("#newPackageNameSelect");
+  const newPackageEffectiveDateInput = fragment.querySelector("#newPackageEffectiveDateInput");
   const batchCustomerSelect = fragment.querySelector("#batchCustomerSelect");
   const batchNewPackageTypeSelect = fragment.querySelector("#batchNewPackageTypeSelect");
   const batchNewPackageNameSelect = fragment.querySelector("#batchNewPackageNameSelect");
+  const batchNewPackageEffectiveDateInput = fragment.querySelector("#batchNewPackageEffectiveDateInput");
   let activeMode = mode;
   let lookupInfo = null;
 
@@ -5286,6 +6273,8 @@ function openPackageModifyModal(mode = "single") {
 
   fillPackageNameOptions("", newPackageNameSelect);
   fillPackageNameOptions("", batchNewPackageNameSelect);
+  configurePackageModifyEffectiveDateInput(newPackageEffectiveDateInput);
+  configurePackageModifyEffectiveDateInput(batchNewPackageEffectiveDateInput);
   switchModifyMode(mode);
 
   form.addEventListener("submit", (event) => {
@@ -5303,8 +6292,8 @@ function openPackageModifyModal(mode = "single") {
         showToast("未查询到该ICCID对应套餐信息");
         return;
       }
-      if (!formData.newPackageType || !formData.newPackageName) {
-        showToast("请选择新套餐类型和新套餐名称");
+      if (!formData.newPackageType || !formData.newPackageName || !isValidPackageModifyEffectiveDate(formData.newPackageEffectiveDate)) {
+        showToast("请选择新套餐类型、新套餐名称，并指定次月及之后的新套餐生效时间");
         return;
       }
       packageModifyRecords.unshift({
@@ -5317,6 +6306,7 @@ function openPackageModifyModal(mode = "single") {
         oldPackageName: lookupInfo.packageName,
         newPackageType: formData.newPackageType,
         newPackageName: formData.newPackageName,
+        newPackageEffectiveDate: formData.newPackageEffectiveDate,
         totalCount: 1,
         successCount: 1,
         failCount: 0,
@@ -5325,8 +6315,8 @@ function openPackageModifyModal(mode = "single") {
       });
       showToast("单卡套餐修改任务已创建");
     } else {
-      if (!formData.customerName || !formData.batchNewPackageType || !formData.batchNewPackageName) {
-        showToast("请选择客户名称、新套餐类型和新套餐名称");
+      if (!formData.customerName || !formData.batchNewPackageType || !formData.batchNewPackageName || !isValidPackageModifyEffectiveDate(formData.batchNewPackageEffectiveDate)) {
+        showToast("请选择客户名称、新套餐类型、新套餐名称，并指定次月及之后的新套餐生效时间");
         return;
       }
       const uploadedFileName = form.elements.batchFile.files[0]?.name || `package_modify_${formatDate(now).replaceAll("-", "")}.xlsx`;
@@ -5340,6 +6330,7 @@ function openPackageModifyModal(mode = "single") {
         oldPackageName: "Z1_PAYG_25GB",
         newPackageType: formData.batchNewPackageType,
         newPackageName: formData.batchNewPackageName,
+        newPackageEffectiveDate: formData.batchNewPackageEffectiveDate,
         totalCount: 100,
         successCount: 96,
         failCount: 4,
@@ -5924,6 +6915,49 @@ function downloadPackageRenewalFile(fileName) {
   `;
   downloadBlob(html, fileName || "package_renewal.xlsx", "application/vnd.ms-excel;charset=utf-8");
   showToast("文件下载成功");
+}
+
+function downloadCardCancelFile(row) {
+  if (row.sourceFile) {
+    downloadBlob(row.sourceFile, row.sourceFile.name || row.fileName || "card_cancel.xlsx", row.sourceFile.type || "application/octet-stream");
+    showToast("文件下载成功");
+    return;
+  }
+  const fileName = row.fileName || "card_cancel.xlsx";
+  const iccidRows = (row.iccids || []).map((iccid) => [iccid]);
+  if (/\.xls$/i.test(fileName)) {
+    const html = `<table><tr><th>ICCID</th></tr>${iccidRows.map(([iccid]) => `<tr><td>${iccid}</td></tr>`).join("")}</table>`;
+    downloadBlob(html, fileName, "application/vnd.ms-excel;charset=utf-8");
+  } else {
+    downloadBlob(createXlsxFile(["ICCID"], iccidRows), fileName, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  }
+  showToast("文件下载成功");
+}
+
+function exportCardCancelOperationLog(rows) {
+  if (!rows.length) {
+    showToast("暂无可导出数据");
+    return;
+  }
+  const headers = ["ICCID", "批次号", "申请人", "客户名称", "状态", "失败原因", "申请时间", "审核时间", "执行时间", "审核人"];
+  const dataRows = rows.map((row) => [
+    row.iccid,
+    row.batchNo,
+    row.operator,
+    row.customerName,
+    row.status,
+    row.failReason,
+    row.applyAt,
+    row.auditAt,
+    row.executedAt,
+    row.auditor
+  ]);
+  downloadBlob(
+    createXlsxFile(headers, dataRows),
+    `注销操作日志_${new Date().toISOString().slice(0, 10)}.xlsx`,
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  );
+  showToast("导出成功");
 }
 
 function downloadPackageModifyLog(fileName) {
