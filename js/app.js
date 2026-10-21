@@ -21,6 +21,19 @@ smsRecords.forEach((row) => {
 
 const DEMO_DEVICE_ICCID = "89444610503500051171";
 
+const packageCustomerPidMap = {
+  "万利通信技术（深圳）有限公司": "C2119462043",
+  "Ingoo Holding Limited": "C2118801024",
+  "Thales China": "C2118800567",
+  "中亿（深圳）信息科技有限公司": "C2119200331",
+  "天翼物联": "C2119155008",
+  "7BIT LIMITED": "C2118700442",
+  "LAINA INTELLIGENT（HK） LIMITED": "C2118700891",
+  "宇视科技": "C2119100220",
+  "杭州觅睿科技股份有限公司": "C2119055661",
+  "深圳博观智联科技有限公司": "C2119088776"
+};
+
 const customerOptions = [
   "万利通信技术（深圳）有限公司",
   "7BIT LIMITED",
@@ -706,10 +719,227 @@ const packageRenewals = [
   { id: 7, iccid: DEMO_DEVICE_ICCID, customerName: "万利通信技术（深圳）有限公司", currentPackageName: "Monthly Fixed_null_2026-04-17", status: "active", packageMonths: 12, activatedAt: "2026-03-26", originalExpiryDate: "2027-03-26" }
 ];
 
+const deviceStatusOptions = ["active", "suspend", "cancel", "active test", "expired"];
+const devicePackageFilterOptions = [
+  "Z1_PAYG_250901",
+  "BRTV_PAYG_250901",
+  "Z5_PAYG_250901",
+  "Trial_Z1_PAYG_250917",
+  "Trial_Z5_PAYG_250918",
+  "Trial_Z1_PAYG_250918",
+  "Monthly Fixed_null_2026-04-17",
+  "Monthly_PAYG",
+  "Z1_PAYG_25GB",
+  "Z5_PAYG_25GB",
+  "PAYG 03-26",
+  "Pre-Pay_2026-03-27"
+];
+const devicePhysicalCardFilterOptions = [
+  "ESIMCNXTCHN",
+  "AR-IOTCONNECT",
+  "ESIMCNXTCHNR",
+  "ESIM42CXLMFF2E2",
+  "ESIMCNXMVOILETR",
+  "IMSICNXE12",
+  "IMSICNXE13",
+  "IMSICNXE14"
+];
+const deviceCardBindingOptions = ["是", "否"];
+
+const deviceRecords = [
+  {
+    id: 1,
+    orderNo: "SO26032604",
+    customerName: "万利通信技术（深圳）有限公司",
+    iccid: DEMO_DEVICE_ICCID,
+    msisdn: "883190603881562",
+    packageName: "Monthly Fixed_null_2026-04-17",
+    mccMnc: "- / -",
+    recentImei: "8663140763101716",
+    monthlyUsage: "111.02 MB",
+    solution: "Monthly Fixed",
+    apn: "eapn1.net",
+    physicalCardId: "ESIMCNXTCHN",
+    status: "active",
+    statusAt: "2023-08-23 15:21:47",
+    lastUsedAt: "2026-05-09 08:12:03",
+    activatedAt: "2026-03-26",
+    imei: "8663140763101716",
+    cardBinding: "是",
+    overageEnabled: false,
+    bindingEnabled: true
+  },
+  {
+    id: 2,
+    orderNo: "SO26011702",
+    customerName: "中亿（深圳）信息科技有限公司",
+    iccid: "89860404112026063001",
+    msisdn: "44770090000123",
+    packageName: "Z1_PAYG_25GB",
+    mccMnc: "460 / 01",
+    recentImei: "8663140763101001",
+    monthlyUsage: "2.41 GB",
+    solution: "Monthly PAYG",
+    apn: "iot.apn",
+    physicalCardId: "AR-IOTCONNECT",
+    status: "active",
+    statusAt: "2024-06-12 10:08:11",
+    lastUsedAt: "2026-06-30 14:26:51",
+    activatedAt: "2026-01-22",
+    imei: "8663140763101001",
+    cardBinding: "是",
+    overageEnabled: true,
+    bindingEnabled: true
+  },
+  {
+    id: 3,
+    orderNo: "SO26011703",
+    customerName: "中亿（深圳）信息科技有限公司",
+    iccid: "89860404112026063002",
+    msisdn: "44770090000124",
+    packageName: "Z1_PAYG_25GB",
+    mccMnc: "460 / 01",
+    recentImei: "8663140763101002",
+    monthlyUsage: "860 MB",
+    solution: "Monthly PAYG",
+    apn: "iot.apn",
+    physicalCardId: "ESIMCNXTCHNR",
+    status: "suspend",
+    statusAt: "2025-11-02 09:33:18",
+    lastUsedAt: "2026-06-28 11:33:45",
+    activatedAt: "2026-01-22",
+    imei: "8663140763101002",
+    cardBinding: "否",
+    overageEnabled: false,
+    bindingEnabled: false
+  },
+  {
+    id: 4,
+    orderNo: "SO26020408",
+    customerName: "中亿（深圳）信息科技有限公司",
+    iccid: "89860404112026062903",
+    msisdn: "44770090000125",
+    packageName: "Trial_Z1_PAYG_250917",
+    mccMnc: "- / -",
+    recentImei: "8663140763101003",
+    monthlyUsage: "128 MB",
+    solution: "Direct Pre-Pay",
+    apn: "trial.apn",
+    physicalCardId: "ESIM42CXLMFF2E2",
+    status: "active test",
+    statusAt: "2026-01-27 16:20:05",
+    lastUsedAt: "2026-06-29 09:07:36",
+    activatedAt: "2026-01-27",
+    imei: "8663140763101003",
+    cardBinding: "是",
+    overageEnabled: false,
+    bindingEnabled: true
+  },
+  {
+    id: 5,
+    orderNo: "SO26011801",
+    customerName: "天翼物联",
+    iccid: "89860404112026062805",
+    msisdn: "44770090000126",
+    packageName: "Z5_PAYG_25GB",
+    mccMnc: "724 / 05",
+    recentImei: "8663140763102001",
+    monthlyUsage: "0 MB",
+    solution: "Monthly PAYG",
+    apn: "arqia.br",
+    physicalCardId: "ESIMCNXMVOILETR",
+    status: "cancel",
+    statusAt: "2026-08-01 00:00:00",
+    lastUsedAt: "2026-07-15 19:21:34",
+    activatedAt: "2026-01-27",
+    imei: "8663140763102001",
+    cardBinding: "否",
+    overageEnabled: false,
+    bindingEnabled: false
+  },
+  {
+    id: 6,
+    orderNo: "SO26011902",
+    customerName: "天翼物联",
+    iccid: "89860404112026062706",
+    msisdn: "44770090000128",
+    packageName: "Z5_PAYG_250901",
+    mccMnc: "724 / 05",
+    recentImei: "8663140763102002",
+    monthlyUsage: "512 MB",
+    solution: "Monthly PAYG",
+    apn: "arqia.br",
+    physicalCardId: "IMSICNXE12",
+    status: "expired",
+    statusAt: "2026-07-20 23:59:59",
+    lastUsedAt: "2026-06-27 08:59:12",
+    activatedAt: "2026-01-27",
+    imei: "8663140763102002",
+    cardBinding: "是",
+    overageEnabled: true,
+    bindingEnabled: true
+  },
+  {
+    id: 7,
+    orderNo: "SO26062401",
+    customerName: "万利通信技术（深圳）有限公司",
+    iccid: "89860404112026062409",
+    msisdn: "44770090000131",
+    packageName: "Monthly_PAYG",
+    mccMnc: "460 / 00",
+    recentImei: "8663140763101717",
+    monthlyUsage: "3.18 GB",
+    solution: "Monthly PAYG",
+    apn: "wl.payg",
+    physicalCardId: "IMSICNXE13",
+    status: "active",
+    statusAt: "2026-01-28 08:45:12",
+    lastUsedAt: "2026-06-24 21:15:00",
+    activatedAt: "2026-01-28",
+    imei: "8663140763101717",
+    cardBinding: "是",
+    overageEnabled: true,
+    bindingEnabled: true
+  },
+  {
+    id: 8,
+    orderNo: "SO26062302",
+    customerName: "万利通信技术（深圳）有限公司",
+    iccid: "89860404112026062310",
+    msisdn: "44770090000132",
+    packageName: "BRTV_PAYG_250901",
+    mccMnc: "724 / 05",
+    recentImei: "8663140763101718",
+    monthlyUsage: "96 MB",
+    solution: "Monthly PAYG",
+    apn: "brtv.apn",
+    physicalCardId: "IMSICNXE14",
+    status: "active",
+    statusAt: "2026-03-10 11:06:22",
+    lastUsedAt: "2026-06-23 07:32:18",
+    activatedAt: "2026-03-10",
+    imei: "8663140763101718",
+    cardBinding: "否",
+    overageEnabled: false,
+    bindingEnabled: false
+  }
+];
+
+function findDeviceRecord(iccid) {
+  return deviceRecords.find((row) => row.iccid === iccid) || null;
+}
+
+function deviceStatusBadgeClass(status) {
+  if (status === "active" || status === "active test") return "success";
+  if (status === "suspend" || status === "expired") return "running";
+  if (status === "cancel") return "fail";
+  return "running";
+}
+
 const packageQuoteSeeds = [
   { companyName: "VILC", quoteNo: "WLG210901", tariff: "PAYG", roaming: "APAC_POSTPAID_Z1", cardType: "UICC插拔", cardFee: "0", currency: "CNY", addedAt: "2026-09-12" },
   { companyName: "VILC", quoteNo: "WLCBR23", tariff: "PAYG", roaming: "Arqia Z1", cardType: "UICC插拔", cardFee: "0", currency: "CNY", addedAt: "2026-09-08" },
-  { companyName: "VILC", quoteNo: "WLCeu07", tariff: "PAYG", roaming: "WanlGO_EU27", cardType: "UICC插拔", cardFee: "0", currency: "CNY", addedAt: "2026-08-26" },
+  { companyName: "VILC", quoteNo: "WLCeu07", tariff: "PAYG", roaming: "WanliGO_EU27", cardType: "UICC插拔", cardFee: "0", currency: "CNY", addedAt: "2026-08-26", idleFee: "0.6" },
   { companyName: "VILC", quoteNo: "WLCZ20201", tariff: "PAYG", roaming: "APAC_POSTPAID_Z5", cardType: "UICC插拔", cardFee: "0", currency: "CNY", addedAt: "2026-08-19" },
   { companyName: "VILC", quoteNo: "Trai 250918", tariff: "PAYG", roaming: "APAC_POSTPAID_Z5", cardType: "UICC插拔", cardFee: "0", currency: "CNY", addedAt: "2026-08-11" },
   { companyName: "VILC", quoteNo: "TraiWL CBR05", tariff: "PAYG", roaming: "Arqia Z1", cardType: "UICC插拔", cardFee: "0", currency: "CNY", addedAt: "2026-07-28" },
@@ -721,7 +951,7 @@ const packageQuoteSeeds = [
 const packageQuoteTariffs = ["PAYG", "Fixed Rate", "Direct Pre-Pay"];
 const packageQuoteCardTypes = ["UICC插拔"];
 const packageQuoteCustomers = ["VILC", "万利通信"];
-const packageQuoteRoamings = ["APAC_POSTPAID_Z1", "Arqia Z1", "WanlGO_EU27", "APAC_POSTPAID_Z5"];
+const packageQuoteRoamings = ["APAC_POSTPAID_Z1", "Arqia Z1", "WanliGO_EU27", "APAC_POSTPAID_Z5"];
 const packageQuoteCurrencies = ["CNY", "EUR", "USD"];
 const packageQuoteFees = ["0", "0.6", "1"];
 
@@ -739,6 +969,45 @@ for (let index = packageQuotes.length; packageQuotes.length < 47; index += 1) {
     currency: packageQuoteCurrencies[index % packageQuoteCurrencies.length],
     addedAt: `2026-${month}-15`
   });
+}
+
+function enrichPackageQuote(quote) {
+  if (!quote) return null;
+  const roaming = roamingConfigs.find((item) => item.name === quote.roaming);
+  let regionDetails = Array.isArray(quote.regionDetails) ? quote.regionDetails : [];
+  if (!regionDetails.length && roaming?.details?.length) {
+    const selectedGroups = quote.regions?.length
+      ? quote.regions
+      : roaming.details.map((item) => item.priceGroup);
+    regionDetails = roaming.details
+      .filter((item) => selectedGroups.includes(item.priceGroup))
+      .map((item) => ({
+        priceGroup: item.priceGroup,
+        country: item.country,
+        unit: item.unit || "MB",
+        included: item.included ?? 0,
+        overage: item.overagePrice ?? 0,
+        rent: item.monthlyRent ?? 0
+      }));
+  }
+  const regions = quote.regions?.length
+    ? quote.regions
+    : regionDetails.map((item) => item.priceGroup);
+  const idleFee = quote.idleFee ?? roaming?.details?.[0]?.idleFee ?? "0";
+  return { ...quote, idleFee, regions, regionDetails };
+}
+
+function findPackageQuoteByNo(quoteNo) {
+  const row = packageQuotes.find((item) => item.quoteNo === quoteNo);
+  return enrichPackageQuote(row);
+}
+
+function formatQuoteCountryDisplay(country, limit = 3) {
+  if (!country) return { text: "—", title: "" };
+  const parts = String(country).split(/[,，]/).map((item) => item.trim()).filter(Boolean);
+  if (parts.length <= limit) return { text: parts.join(", "), title: parts.join(", ") };
+  const preview = parts.slice(0, limit).join(", ");
+  return { text: `${preview} 等${parts.length}国`, title: parts.join(", ") };
 }
 
 const packageRemainingQuotas = [
@@ -939,6 +1208,195 @@ function applyCancelStatusToCards(iccids) {
   iccids.forEach((iccid) => {
     const card = findManagedCard(iccid);
     if (card) card.status = "cancel";
+  });
+}
+
+const retentionOperatorOptions = cardCancelOperatorOptions;
+const RETENTION_DETAIL_FAIL_RESULTS = ["受理失败", "执行失败"];
+
+function addCalendarYears(dateStr, years) {
+  const date = new Date(`${String(dateStr).slice(0, 10)}T00:00:00`);
+  date.setFullYear(date.getFullYear() + years);
+  return date;
+}
+
+function getRetentionLastSuccessAt(iccid) {
+  let latest = retentionLastSuccessAtByIccid[iccid] || null;
+  retentionLogs.forEach((batch) => {
+    (batch.details || []).forEach((detail) => {
+      if (detail.iccid !== iccid || detail.result !== "执行成功") return;
+      const at = (batch.effectiveAt || batch.applyAt || "").slice(0, 10);
+      if (at && (!latest || at > latest)) latest = at;
+    });
+  });
+  return latest;
+}
+
+function getRetentionEligibility(iccid, operator, at = new Date()) {
+  if (!isCardCancelCustomerOperator(operator)) return { ok: true };
+  const card = findManagedCard(iccid);
+  if (!card) return { ok: false, reason: "ICCID 不存在或未归属该客户" };
+  const lastSuccess = getRetentionLastSuccessAt(iccid);
+  const baseDate = lastSuccess || card.activatedAt;
+  if (!baseDate) return { ok: false, reason: "无法获取激活时间" };
+  const eligibleFrom = addCalendarYears(baseDate, 1);
+  const applyDay = new Date(at);
+  applyDay.setHours(0, 0, 0, 0);
+  if (applyDay < eligibleFrom) {
+    return {
+      ok: false,
+      reason: lastSuccess ? "自上次成功停机保号起未满一年" : "自激活起未满一年"
+    };
+  }
+  return { ok: true };
+}
+
+function getRetentionDetailFailReason(detail) {
+  if (!RETENTION_DETAIL_FAIL_RESULTS.includes(detail.result)) return "--";
+  return detail.failReason || "停机保号失败";
+}
+
+function getRetentionStatusBadgeClass(status) {
+  if (["执行成功", "待执行"].includes(status)) return "success";
+  if (["执行失败", "受理失败"].includes(status)) return "fail";
+  return "running";
+}
+
+function getRetentionBatchFailReason(row) {
+  if (row.result === "执行失败") return row.batchFailReason || "部分卡片停机保号失败";
+  return "—";
+}
+
+function syncRetentionBatchFromDetails(log) {
+  const details = log.details || [];
+  if (!details.length) return;
+  const acceptFailCount = details.filter((item) => item.result === "受理失败").length;
+  const executeFailCount = details.filter((item) => item.result === "执行失败").length;
+  const pendingCount = details.filter((item) => item.result === "待执行").length;
+  const successCount = details.filter((item) => item.result === "执行成功").length;
+  log.failCount = acceptFailCount + executeFailCount;
+  log.successCount = successCount + pendingCount;
+  if (acceptFailCount === details.length) {
+    log.result = "执行失败";
+    log.batchFailReason = log.batchFailReason || details[0]?.failReason || "全部 ICCID 受理失败";
+    log.effectiveAt = log.effectiveAt || "";
+    return;
+  }
+  if (executeFailCount > 0 || (successCount > 0 && successCount < details.length && pendingCount === 0)) {
+    log.result = "执行失败";
+    if (!log.batchFailReason) {
+      log.batchFailReason = executeFailCount < details.length ? "部分卡片停机保号失败" : (details.find((item) => item.result === "执行失败")?.failReason || "停机保号失败");
+    }
+    return;
+  }
+  if (pendingCount > 0) {
+    log.result = "待执行";
+    return;
+  }
+  if (successCount === details.length) {
+    log.result = "执行成功";
+  }
+}
+
+function getRetentionCardEffectiveAt(batch, detail) {
+  if (detail.result === "执行成功") return batch.effectiveAt || "—";
+  if (detail.result === "待执行" || batch.result === "待执行") return batch.effectiveAt || "—";
+  if (detail.result === "受理失败") return "—";
+  if (detail.result === "执行失败" || batch.result === "执行失败") return batch.effectiveAt || batch.applyAt || "—";
+  return batch.effectiveAt || batch.applyAt || "—";
+}
+
+function flattenRetentionOperationLogs() {
+  const rows = [];
+  retentionLogs.forEach((batch) => {
+    (batch.details || []).forEach((detail) => {
+      rows.push({
+        iccid: detail.iccid,
+        batchNo: batch.batchNo,
+        operator: batch.operator,
+        customerName: batch.customerName,
+        status: detail.result,
+        failReason: getRetentionDetailFailReason(detail),
+        effectiveAt: getRetentionCardEffectiveAt(batch, detail),
+        applyAt: batch.applyAt
+      });
+    });
+  });
+  return rows.sort((a, b) => `${b.effectiveAt}${b.applyAt}`.localeCompare(`${a.effectiveAt}${a.applyAt}`));
+}
+
+function appendRetentionDeviceLogIfTerminal(detail, batch) {
+  if (detail.result === "执行成功") {
+    appendDeviceOperationLog({
+      iccid: detail.iccid,
+      operatedAt: batch.effectiveAt || batch.applyAt,
+      operator: batch.operator || "系统",
+      action: "停机保号",
+      content: "停机保号",
+      result: "操作成功"
+    });
+    return;
+  }
+  if (detail.result === "执行失败" || detail.result === "受理失败") {
+    appendDeviceOperationLog({
+      iccid: detail.iccid,
+      operatedAt: detail.result === "受理失败" ? batch.applyAt : (batch.effectiveAt || batch.applyAt),
+      operator: batch.operator || "系统",
+      action: "停机保号",
+      content: "停机保号",
+      result: "操作失败"
+    });
+  }
+}
+
+function buildRetentionDeviceOperationLogsFromBatches(batches) {
+  const rows = [];
+  batches.forEach((batch) => {
+    (batch.details || []).forEach((detail) => {
+      if (detail.result === "执行成功") {
+        rows.push({
+          iccid: detail.iccid,
+          operatedAt: batch.effectiveAt || batch.applyAt,
+          operator: batch.operator || "系统",
+          action: "停机保号",
+          content: "停机保号",
+          result: "操作成功"
+        });
+      } else if (detail.result === "执行失败" || detail.result === "受理失败") {
+        rows.push({
+          iccid: detail.iccid,
+          operatedAt: detail.result === "受理失败" ? batch.applyAt : (batch.effectiveAt || batch.applyAt),
+          operator: batch.operator || "系统",
+          action: "停机保号",
+          content: "停机保号",
+          result: "操作失败"
+        });
+      }
+    });
+  });
+  return rows;
+}
+
+function applyRetentionStatusToCards(iccids) {
+  iccids.forEach((iccid) => {
+    const card = findManagedCard(iccid);
+    if (card) card.status = "retention";
+  });
+}
+
+function getCustomerNameForSessionOperator(operator) {
+  if (operator === "客户-王利") return "万利通信技术（深圳）有限公司";
+  if (operator === "客户-赵敏") return "中亿（深圳）信息科技有限公司";
+  return "";
+}
+
+function buildRetentionDetails(iccids, operator, applyAt) {
+  return iccids.map((iccid) => {
+    const eligibility = getRetentionEligibility(iccid, operator, applyAt);
+    if (!eligibility.ok) {
+      return { iccid, result: "受理失败", failReason: eligibility.reason };
+    }
+    return { iccid, result: "待执行", failReason: "" };
   });
 }
 
@@ -1250,8 +1708,95 @@ cardCancelLogs.filter((log) => log.result === "执行成功").forEach((log) => a
   (log.details || []).filter((detail) => detail.result === "执行成功").map((detail) => detail.iccid)
 ));
 
+const retentionLastSuccessAtByIccid = {
+  "89860404112026062706": "2025-07-01"
+};
+
+const retentionLogs = [
+  {
+    id: 1,
+    batchNo: "RT202610180001",
+    operator: "客户-王利",
+    customerName: "万利通信技术（深圳）有限公司",
+    type: "批量",
+    fileName: "wanli_retention_20261018.xlsx",
+    iccids: [DEMO_DEVICE_ICCID, "89860404112026062409"],
+    totalCount: 2,
+    successCount: 1,
+    failCount: 1,
+    result: "待执行",
+    applyAt: "2026-10-18 09:42:11",
+    effectiveAt: "2026-11-01 00:00:00",
+    batchFailReason: "",
+    details: [
+      { iccid: DEMO_DEVICE_ICCID, result: "受理失败", failReason: "自激活起未满一年" },
+      { iccid: "89860404112026062409", result: "待执行", failReason: "" }
+    ]
+  },
+  {
+    id: 2,
+    batchNo: "RT202610120002",
+    operator: "admin",
+    customerName: "中亿（深圳）信息科技有限公司",
+    type: "批量",
+    fileName: "zhongyi_retention_admin_20261012.xlsx",
+    iccids: ["89860404112026063001"],
+    totalCount: 1,
+    successCount: 1,
+    failCount: 0,
+    result: "待执行",
+    applyAt: "2026-10-12 14:08:33",
+    effectiveAt: "2026-11-01 00:00:00",
+    batchFailReason: "",
+    details: [{ iccid: "89860404112026063001", result: "待执行", failReason: "" }]
+  },
+  {
+    id: 3,
+    batchNo: "RT202609010003",
+    operator: "客户-赵敏",
+    customerName: "天翼物联",
+    type: "批量",
+    fileName: "tianyi_retention_20260901.xlsx",
+    iccids: ["89860404112026062706"],
+    totalCount: 1,
+    successCount: 0,
+    failCount: 1,
+    result: "执行失败",
+    applyAt: "2026-09-01 11:20:05",
+    effectiveAt: "",
+    batchFailReason: "自上次成功停机保号起未满一年",
+    details: [{ iccid: "89860404112026062706", result: "受理失败", failReason: "自上次成功停机保号起未满一年" }]
+  },
+  {
+    id: 5,
+    batchNo: "RT202607200005",
+    operator: "admin",
+    customerName: "天翼物联",
+    type: "批量",
+    fileName: "tianyi_retention_partial_fail_20260720.xlsx",
+    iccids: ["89860404112026062805", "89444610503500051173"],
+    totalCount: 2,
+    successCount: 1,
+    failCount: 1,
+    result: "执行失败",
+    applyAt: "2026-07-20 16:40:18",
+    effectiveAt: "2026-08-01 00:00:00",
+    batchFailReason: "部分卡片停机保号失败",
+    details: [
+      { iccid: "89860404112026062805", result: "执行成功", failReason: "" },
+      { iccid: "89444610503500051173", result: "执行失败", failReason: "平台接口异常，停机保号未生效" }
+    ]
+  }
+];
+
+retentionLogs.forEach((log) => syncRetentionBatchFromDetails(log));
+retentionLogs.filter((log) => log.result === "执行成功").forEach((log) => applyRetentionStatusToCards(
+  (log.details || []).filter((detail) => detail.result === "执行成功").map((detail) => detail.iccid)
+));
+
 const deviceOperationLogs = [
   ...buildCardCancelDeviceOperationLogsFromBatches(cardCancelLogs),
+  ...buildRetentionDeviceOperationLogsFromBatches(retentionLogs),
   {
     iccid: DEMO_DEVICE_ICCID,
     operatedAt: "2026-09-25 16:02:18",
@@ -1402,7 +1947,8 @@ const state = {
     billDetail: {},
     poolBill: {},
     usageDetail: {},
-    cardCancel: {}
+    cardCancel: {},
+    retention: {}
   },
   smsCreatedAtSort: "desc",
   selectedBlacklist: new Set(),
@@ -1417,6 +1963,9 @@ const state = {
   selectedDataPoolId: null,
   dataPoolCardsTab: "detail",
   deviceTab: "device",
+  deviceSelectedIccid: null,
+  selectedDevices: new Set(),
+  deviceListDisplayTotal: 164106,
   sidebarCollapsed: localStorage.getItem("sidebarCollapsed") === "true",
   smsUrlConfig: {
     receiptUrl: "",
@@ -1479,7 +2028,7 @@ const moduleMeta = {
   },
   device: {
     title: "设备管理",
-    desc: "查看设备相关业务记录。",
+    desc: "设备列表查询；点击 ICCID 进入设备详情与各页签。",
     parent: "服务设备"
   },
   dataPool: {
@@ -1495,6 +2044,11 @@ const moduleMeta = {
   cardCancel: {
     title: "卡片注销",
     desc: "客户提交注销申请，管理员审核后次月执行；管理员可直接注销。",
+    parent: "服务设备"
+  },
+  retention: {
+    title: "停机保号",
+    desc: "批量申请停机保号，次月 1 日生效；客户侧须满足一年限制，无需审核。",
     parent: "服务设备"
   },
   monthlyBill: {
@@ -1537,7 +2091,11 @@ function bindGlobalEvents() {
       state.selectedPackageRenewalAudits.clear();
       state.selectedPackageQuotes.clear();
       state.selectedDataPoolCards.clear();
-      if (state.module === "device") state.deviceTab = "device";
+      if (state.module === "device") {
+        state.deviceTab = "device";
+        state.deviceSelectedIccid = null;
+        state.selectedDevices.clear();
+      }
       render();
     });
   });
@@ -1748,6 +2306,27 @@ function renderFilter() {
     `;
   }
 
+  if (state.module === "retention") {
+    const filters = state.filters.retention;
+    const hideCustomer = isCardCancelCustomerOperator(getCardCancelSessionOperator());
+    filterCard.innerHTML = `
+      <form id="filterForm" class="filter-grid package-renewal-log-filter card-cancel-filter">
+        ${fieldSelect("申请人", "operator", retentionOperatorOptions, filters.operator)}
+        ${fieldInput("批次号", "batchNo", filters.batchNo)}
+        ${hideCustomer ? "" : fieldDatalist("客户名称", "customerName", filters.customerName, customerOptions)}
+        ${fieldSelect("状态", "result", ["待执行", "执行成功", "执行失败"], filters.result)}
+        <label class="field">
+          <span>申请时间</span>
+          <div class="range-row">
+            <input type="date" name="startDate" value="${filters.startDate || ""}">
+            <input type="date" name="endDate" value="${filters.endDate || ""}">
+          </div>
+        </label>
+        ${commonActions}
+      </form>
+    `;
+  }
+
   if (state.module === "packageRenewalAudit") {
     filterCard.innerHTML = `
       <form id="filterForm" class="filter-grid package-renewal-log-filter">
@@ -1845,23 +2424,61 @@ function renderFilter() {
   }
 
   if (state.module === "device") {
-    filterCard.innerHTML = renderDeviceTabs() + (state.deviceTab === "smsSession" ? `
-      <form id="filterForm" class="filter-grid device-sms-filter">
-        <label class="field device-date-field">
-          <span>时间范围</span>
-          <div class="range-row">
-            <input type="date" name="startDate" value="${filters.startDate || ""}">
-            <input type="date" name="endDate" value="${filters.endDate || ""}">
+    if (!state.deviceSelectedIccid) {
+      filterCard.innerHTML = `
+        <form id="filterForm" class="filter-grid device-list-filter">
+          <label class="field">
+            <span>客户名称</span>
+            <input type="text" name="customerName" list="deviceCustomerOptions" value="${escapeAttr(filters.customerName || "")}" placeholder="请输入">
+            <datalist id="deviceCustomerOptions">${customerOptions.map((name) => `<option value="${escapeAttr(name)}"></option>`).join("")}</datalist>
+          </label>
+          ${fieldSelect("套餐名称", "packageName", devicePackageFilterOptions, filters.packageName, "请选择")}
+          ${fieldInput("ICCID", "iccid", filters.iccid, "请输入")}
+          ${fieldInput("MSISDN", "msisdn", filters.msisdn, "请输入")}
+          ${fieldInput("IMEI", "imei", filters.imei, "请输入")}
+          ${fieldInput("订单号", "orderNo", filters.orderNo, "请输入")}
+          ${fieldSelect("实体卡ID", "physicalCardId", devicePhysicalCardFilterOptions, filters.physicalCardId, "请选择")}
+          ${fieldSelect("状态", "status", deviceStatusOptions, filters.status, "请选择")}
+          ${fieldSelect("机卡绑定", "cardBinding", deviceCardBindingOptions, filters.cardBinding, "请选择")}
+          <label class="field">
+            <span>最近时间</span>
+            <div class="range-row">
+              <input type="date" name="recentStart" value="${filters.recentStart || ""}">
+              <input type="date" name="recentEnd" value="${filters.recentEnd || ""}">
+            </div>
+          </label>
+          <div class="filter-actions">
+            <button type="submit" class="btn primary">搜索</button>
+            <button type="button" class="btn ghost" id="resetFilters">重置</button>
           </div>
-        </label>
-        ${fieldSelect("类型", "type", ["上行", "下行"], filters.type)}
-        ${fieldSelect("状态", "status", ["成功", "失败", "执行中"], filters.status)}
-        <div class="filter-actions">
-          <button type="submit" class="btn primary">搜索</button>
-          <button type="button" class="btn ghost" id="resetFilters">重置</button>
+        </form>
+      `;
+    } else {
+      filterCard.innerHTML = `
+        <div class="detail-title-row device-detail-head">
+          <button type="button" class="btn ghost" id="backToDeviceList">返回</button>
+          <strong>ICCID ${escapeAttr(state.deviceSelectedIccid)}</strong>
         </div>
-      </form>
-    ` : `<form id="filterForm" class="hidden-form"></form>`);
+        ${renderDeviceTabs()}
+        ${state.deviceTab === "smsSession" ? `
+          <form id="filterForm" class="filter-grid device-sms-filter">
+            <label class="field device-date-field">
+              <span>时间范围</span>
+              <div class="range-row">
+                <input type="date" name="startDate" value="${filters.startDate || ""}">
+                <input type="date" name="endDate" value="${filters.endDate || ""}">
+              </div>
+            </label>
+            ${fieldSelect("类型", "type", ["上行", "下行"], filters.type)}
+            ${fieldSelect("状态", "status", ["成功", "失败", "执行中"], filters.status)}
+            <div class="filter-actions">
+              <button type="submit" class="btn primary">搜索</button>
+              <button type="button" class="btn ghost" id="resetFilters">重置</button>
+            </div>
+          </form>
+        ` : `<form id="filterForm" class="hidden-form"></form>`}
+      `;
+    }
   }
 
   if (state.module === "monthlyBill") {
@@ -1963,6 +2580,12 @@ function renderFilter() {
       state.page = 1;
       render();
     }));
+    $("#backToDeviceList")?.addEventListener("click", () => {
+      state.deviceSelectedIccid = null;
+      state.deviceTab = "device";
+      state.page = 1;
+      render();
+    });
   }
 }
 
@@ -2019,7 +2642,7 @@ function fieldSelect(label, name, options, value = "", placeholder = "请选择"
 function renderToolbar() {
   const toolbar = $("#toolbarActions");
   const tableTools = $(".table-tools");
-  tableTools.style.display = state.module === "device" && state.deviceTab !== "smsSession" ? "none" : "flex";
+  tableTools.style.display = state.module === "device" && (state.deviceSelectedIccid && state.deviceTab !== "smsSession") ? "none" : "flex";
   if (state.module === "sms") {
     toolbar.innerHTML = `
       <button class="btn primary" id="singleSendBtn">发送短信</button>
@@ -2109,6 +2732,15 @@ function renderToolbar() {
     });
   }
 
+  if (state.module === "retention") {
+    toolbar.innerHTML = `
+      <button class="btn primary" id="retentionBtn">停机保号</button>
+      <button class="btn orange" id="retentionLogBtn">操作日志</button>
+    `;
+    $("#retentionBtn").addEventListener("click", () => openRetentionModal());
+    $("#retentionLogBtn").addEventListener("click", () => openRetentionLogModal());
+  }
+
   if (state.module === "packageRenewalAudit") {
     toolbar.innerHTML = `<button class="btn primary" id="approveRenewalAuditBtn" disabled>通过</button>`;
     $("#approveRenewalAuditBtn").addEventListener("click", () => {
@@ -2187,11 +2819,30 @@ function renderToolbar() {
   }
 
   if (state.module === "device") {
-    toolbar.innerHTML = state.deviceTab === "smsSession" ? `
-      <button class="btn export" id="deviceSmsExportBtn">导出</button>
-    ` : "";
-    if (state.deviceTab === "smsSession") {
+    if (!state.deviceSelectedIccid) {
+      toolbar.innerHTML = `
+        <div class="device-toolbar-actions">
+          <button type="button" class="btn pool-move">移动卡</button>
+          <button type="button" class="btn pool-add">发送短信</button>
+          <button type="button" class="btn pool-adjust">复机</button>
+          <button type="button" class="btn pool-leave">停机</button>
+          <button type="button" class="btn pool-export">延期</button>
+          <button type="button" class="btn orange">解绑</button>
+          <button type="button" class="btn export">导出</button>
+          <button type="button" class="btn primary">批量续费</button>
+          <button type="button" class="btn ghost">设置上网地址</button>
+          <button type="button" class="btn ghost">流量刷新</button>
+          <button type="button" class="btn ghost">数据清零</button>
+        </div>
+      `;
+      $$(".device-toolbar-actions .btn").forEach((button) => {
+        button.addEventListener("click", () => showToast(`${button.textContent}（演示）`));
+      });
+    } else if (state.deviceTab === "smsSession") {
+      toolbar.innerHTML = `<button class="btn export" id="deviceSmsExportBtn">导出</button>`;
       $("#deviceSmsExportBtn").addEventListener("click", () => exportRows(getFilteredRows(), "短信会话记录导出"));
+    } else {
+      toolbar.innerHTML = "";
     }
   }
 
@@ -2239,6 +2890,9 @@ function renderTable() {
   const tableCard = $(".table-card");
   if (historyPanels) historyPanels.hidden = !historyView;
   if (tableCard) tableCard.hidden = historyView;
+  if (tableCard) {
+    tableCard.classList.toggle("device-list-table-card", state.module === "device" && !state.deviceSelectedIccid);
+  }
   const table = $(".table-card .table-wrap table");
   if (table) {
     table.classList.toggle("data-pool-table", state.module === "dataPool");
@@ -2246,6 +2900,12 @@ function renderTable() {
   }
 
   renderSmsStatsRow();
+
+  if (state.module === "device" && !state.deviceSelectedIccid) {
+    renderDeviceListTable(pageRows);
+    renderPagination(rows.length, totalPages, state.deviceListDisplayTotal);
+    return;
+  }
 
   if (state.module === "device" && state.deviceTab === "device") {
     renderDeviceDetailPage();
@@ -2273,6 +2933,7 @@ function renderTable() {
   if (state.module === "packageRenewal") renderPackageRenewalTable(pageRows);
   if (state.module === "packageRenewalAudit") renderPackageRenewalAuditTable(pageRows);
   if (state.module === "cardCancel") renderCardCancelTable(pageRows);
+  if (state.module === "retention") renderRetentionTable(pageRows);
   if (state.module === "packageQuote") renderPackageQuoteTable(pageRows);
   if (state.module === "packageRemainingQuota") renderPackageRemainingQuotaTable(pageRows);
   if (state.module === "dataPool") renderDataPoolTable(pageRows);
@@ -2301,7 +2962,7 @@ function renderSmsStatsRow() {
   }
 
   if (state.module === "device") {
-    if (state.deviceTab !== "smsSession") {
+    if (!state.deviceSelectedIccid || state.deviceTab !== "smsSession") {
       statsRow.style.display = "none";
       return;
     }
@@ -2465,6 +3126,23 @@ function getFilteredRows() {
     }).sort((a, b) => b.applyAt.localeCompare(a.applyAt));
   }
 
+  if (state.module === "retention") {
+    const filters = state.filters.retention;
+    const sessionCustomer = getCustomerNameForSessionOperator(getCardCancelSessionOperator());
+    return retentionLogs.filter((row) => {
+      const applyDate = row.applyAt.slice(0, 10);
+      const inStart = !filters.startDate || applyDate >= filters.startDate;
+      const inEnd = !filters.endDate || applyDate <= filters.endDate;
+      const customerOk = sessionCustomer ? row.customerName === sessionCustomer : includes(row.customerName, filters.customerName);
+      return matchExact(row.operator, filters.operator)
+        && includes(row.batchNo, filters.batchNo)
+        && customerOk
+        && matchExact(row.result, filters.result)
+        && inStart
+        && inEnd;
+    }).sort((a, b) => b.applyAt.localeCompare(a.applyAt));
+  }
+
   if (state.module === "packageRenewalAudit") {
     const filters = state.filters.packageRenewalAudit;
     return packageRenewalLogs.filter((row) => {
@@ -2543,12 +3221,35 @@ function getFilteredRows() {
   }
 
   if (state.module === "device") {
+    if (!state.deviceSelectedIccid) {
+      const filters = state.filters.device;
+      return deviceRecords.filter((row) => {
+        const recentDate = row.lastUsedAt.slice(0, 10);
+        const inRecentStart = !filters.recentStart || recentDate >= filters.recentStart;
+        const inRecentEnd = !filters.recentEnd || recentDate <= filters.recentEnd;
+        return includes(row.customerName, filters.customerName)
+          && matchExact(row.packageName, filters.packageName)
+          && includes(row.iccid, filters.iccid)
+          && includes(row.msisdn, filters.msisdn)
+          && includes(row.imei, filters.imei)
+          && includes(row.orderNo, filters.orderNo)
+          && matchExact(row.physicalCardId, filters.physicalCardId)
+          && matchExact(row.status, filters.status)
+          && matchExact(row.cardBinding, filters.cardBinding)
+          && inRecentStart
+          && inRecentEnd;
+      }).sort((a, b) => b.statusAt.localeCompare(a.statusAt));
+    }
     if (state.deviceTab !== "smsSession") return [];
     const filters = state.filters.device;
     return smsRecords.filter((row) => {
       const inStart = !filters.startDate || row.createdAt >= filters.startDate;
       const inEnd = !filters.endDate || row.createdAt <= filters.endDate;
-      return inStart && inEnd && matchExact(row.type, filters.type) && matchExact(row.status, filters.status);
+      return row.iccid === state.deviceSelectedIccid
+        && inStart
+        && inEnd
+        && matchExact(row.type, filters.type)
+        && matchExact(row.status, filters.status);
     }).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
@@ -2648,6 +3349,93 @@ function renderSmsTable(rows) {
   });
 }
 
+function renderDeviceListTable(rows) {
+  const allRows = getFilteredRows();
+  const selectedCount = allRows.filter((row) => state.selectedDevices.has(row.id)).length;
+  $("#tableHead").innerHTML = `
+    <tr>
+      <th><input type="checkbox" class="checkbox" id="deviceCheckAll" ${rows.length && selectedCount === rows.length ? "checked" : ""} ${rows.length ? "" : "disabled"}></th>
+      <th>订单号</th>
+      <th>客户名称</th>
+      <th>ICCID</th>
+      <th>MSISDN</th>
+      <th>套餐名称</th>
+      <th>MCC/MNC</th>
+      <th>最近上网IMEI</th>
+      <th>当月用量</th>
+      <th>Solution</th>
+      <th>APN</th>
+      <th>实体卡ID</th>
+      <th>状态</th>
+      <th>状态时间</th>
+      <th>上次使用时间</th>
+      <th>激活时间</th>
+      <th>操作</th>
+    </tr>
+  `;
+  $("#tableBody").innerHTML = rows.length ? rows.map((row) => `
+    <tr>
+      <td><input type="checkbox" class="checkbox" data-device-id="${row.id}" ${state.selectedDevices.has(row.id) ? "checked" : ""}></td>
+      <td>${row.orderNo}</td>
+      <td class="content-cell" title="${escapeAttr(row.customerName)}">${row.customerName}</td>
+      <td><button type="button" class="device-iccid-link" data-device-iccid="${escapeAttr(row.iccid)}">${row.iccid}</button></td>
+      <td>${row.msisdn}</td>
+      <td class="content-cell" title="${escapeAttr(row.packageName)}">${row.packageName}</td>
+      <td>${row.mccMnc}</td>
+      <td>${row.recentImei}</td>
+      <td>${row.monthlyUsage}</td>
+      <td>${row.solution}</td>
+      <td>${row.apn}</td>
+      <td>${row.physicalCardId}</td>
+      <td><span class="status ${deviceStatusBadgeClass(row.status)}">${row.status}</span></td>
+      <td>${row.statusAt}</td>
+      <td>${row.lastUsedAt}</td>
+      <td>${row.activatedAt}</td>
+      <td>
+        <div class="op-group device-op-group">
+          <button type="button" class="op-btn" data-device-op="refresh">刷新</button>
+          <button type="button" class="op-btn" data-device-op="restore">复机</button>
+          <button type="button" class="op-btn" data-device-op="suspend">停机</button>
+          <span class="op-btn op-btn-static">超量(${row.overageEnabled ? "是" : "否"})</span>
+          <button type="button" class="op-btn" data-device-op="binding">${row.bindingEnabled ? "开启绑定" : "开启绑定"}</button>
+          <button type="button" class="op-btn" data-device-op="unlock">解锁</button>
+        </div>
+      </td>
+    </tr>
+  `).join("") : emptyRow(17);
+
+  const checkAll = $("#deviceCheckAll");
+  if (checkAll) {
+    checkAll.indeterminate = selectedCount > 0 && selectedCount < rows.length;
+    checkAll.addEventListener("change", (event) => {
+      rows.forEach((row) => {
+        if (event.target.checked) state.selectedDevices.add(row.id);
+        else state.selectedDevices.delete(row.id);
+      });
+      renderDeviceListTable(rows);
+    });
+  }
+  $$("[data-device-id]").forEach((checkbox) => {
+    checkbox.addEventListener("change", () => {
+      const id = Number(checkbox.dataset.deviceId);
+      if (checkbox.checked) state.selectedDevices.add(id);
+      else state.selectedDevices.delete(id);
+      renderDeviceListTable(rows);
+    });
+  });
+  $$("[data-device-iccid]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.deviceSelectedIccid = button.dataset.deviceIccid;
+      state.deviceTab = "device";
+      state.page = 1;
+      render();
+    });
+  });
+  $$("[data-device-op]").forEach((button) => {
+    button.addEventListener("click", () => showToast(`${button.textContent}（演示）`));
+  });
+}
+
 function renderDeviceSmsSessionTable(rows) {
   $("#tableHead").innerHTML = `
     <tr>
@@ -2678,13 +3466,15 @@ function renderDeviceSmsSessionTable(rows) {
 }
 
 function renderDeviceDetailPage() {
+  const device = findDeviceRecord(state.deviceSelectedIccid) || findDeviceRecord(DEMO_DEVICE_ICCID);
+  const iccid = device?.iccid || state.deviceSelectedIccid || DEMO_DEVICE_ICCID;
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
   const monthValue = `${currentYear}-${String(currentMonth).padStart(2, "0")}`;
   const smsRows = getDeviceSmsUsageRows(currentYear, currentMonth);
-  const demoCard = findManagedCard(DEMO_DEVICE_ICCID);
-  const demoStatus = demoCard?.status || "active";
+  const managedCard = findManagedCard(iccid);
+  const demoStatus = managedCard?.status || device?.status || "active";
 
   $("#tableHead").innerHTML = "";
   $("#tableBody").innerHTML = `
@@ -2694,25 +3484,25 @@ function renderDeviceDetailPage() {
           <section class="device-section">
             <h3>设备信息</h3>
             <div class="device-info-grid">
-              ${deviceInfoItem("设备ID", "43_SO26032604_051171")}
+              ${deviceInfoItem("设备ID", `${device?.orderNo || "SO26032604"}_${iccid.slice(-6)}`)}
               ${deviceInfoItem("类型", "Main Dev")}
               ${deviceInfoItem("状态", demoStatus)}
-              ${deviceInfoItem("承诺时间", "2026-03-26")}
-              ${deviceInfoItem("ICCID", "89444610503500051171")}
+              ${deviceInfoItem("承诺时间", device?.activatedAt || "2026-03-26")}
+              ${deviceInfoItem("ICCID", iccid)}
               ${deviceInfoItem("单次上网IMEI", "8663140763101716")}
               ${deviceInfoItem("绑定上网IMEI", "8663140763101716")}
               ${deviceInfoItem("MCC/MNC", "460/01")}
               ${deviceInfoItem("EID", "-")}
-              ${deviceInfoItem("MSISDN", "883190603881562")}
-              ${deviceInfoItem("卡主运营商", "ESIMCNXTCHN")}
-              ${deviceInfoItem("客户名称", "万利通信技术（深圳）有限公司")}
-              ${deviceInfoItem("出库时间", "2026-03-26")}
-              ${deviceInfoItem("APN", "eapn1.net")}
+              ${deviceInfoItem("MSISDN", device?.msisdn || "—")}
+              ${deviceInfoItem("卡主运营商", device?.physicalCardId || "—")}
+              ${deviceInfoItem("客户名称", device?.customerName || "—")}
+              ${deviceInfoItem("出库时间", device?.activatedAt || "—")}
+              ${deviceInfoItem("APN", device?.apn || "—")}
               ${deviceInfoItem("主IP", "100.121.110.124")}
               ${deviceInfoItem("备IP", "100.125.110.124")}
               ${deviceInfoItem("首次使用时间", "2026-03-26")}
-              ${deviceInfoItem("激活时间", "2026-03-26")}
-              ${deviceInfoItem("上次使用时间", "2026-05-09")}
+              ${deviceInfoItem("激活时间", device?.activatedAt || "—")}
+              ${deviceInfoItem("上次使用时间", device?.lastUsedAt || "—")}
               ${deviceInfoItem("套餐剩余流量(MB)", "-")}
               ${deviceInfoItem("当月已用量(MB)", "N/A")}
               ${deviceInfoItem("套餐总量(MB)", "2")}
@@ -2729,14 +3519,14 @@ function renderDeviceDetailPage() {
             <h3>IMSIs</h3>
             <table class="inner-table">
               <thead><tr><th>ICCID</th><th>IMSI</th><th>当前客户名</th><th>初始客户名</th></tr></thead>
-              <tbody><tr><td>89444610503500051171</td><td>204046824081902</td><td></td><td></td></tr></tbody>
+              <tbody><tr><td>${iccid}</td><td>204046824081902</td><td>${device?.customerName || ""}</td><td>${device?.customerName || ""}</td></tr></tbody>
             </table>
           </section>
 
           <section class="device-section">
             <h3>所属客户</h3>
             <div class="device-info-grid compact-grid">
-              ${deviceInfoItem("客户名称", "万利通信技术（深圳）有限公司")}
+              ${deviceInfoItem("客户名称", device?.customerName || "—")}
               ${deviceInfoItem("客户经理姓名", "Tiger")}
               ${deviceInfoItem("客户经理邮箱", "tiger.zuo@wirelesslogic.com")}
             </div>
@@ -2745,7 +3535,7 @@ function renderDeviceDetailPage() {
           <section class="device-section">
             <h3>所属订单</h3>
             <div class="device-info-grid compact-grid">
-              ${deviceInfoItem("订单号", "SO26032604")}
+              ${deviceInfoItem("订单号", device?.orderNo || "—")}
               ${deviceInfoItem("订单状态", "已出货")}
               ${deviceInfoItem("下单时间", "2026-03-26")}
             </div>
@@ -2804,7 +3594,8 @@ function renderDevicePlaceholder() {
 }
 
 function renderDeviceOperationLogPage() {
-  const rows = deviceOperationLogs.filter((row) => row.iccid === DEMO_DEVICE_ICCID);
+  const iccid = state.deviceSelectedIccid || DEMO_DEVICE_ICCID;
+  const rows = deviceOperationLogs.filter((row) => row.iccid === iccid);
   $("#tableHead").innerHTML = `
     <tr>
       <th>操作ID</th>
@@ -5065,6 +5856,263 @@ function openCardCancelLogModal() {
   openModal(fragment);
 }
 
+function getMockRetentionIccids(customerName) {
+  return packageRenewals
+    .filter((card) => card.customerName === customerName && !["cancel", "retention"].includes(card.status))
+    .map((card) => card.iccid)
+    .slice(0, 3);
+}
+
+function createRetentionBatch({ customerName, fileName, operator, sourceFile }) {
+  const iccids = getMockRetentionIccids(customerName);
+  if (!iccids.length) return null;
+  const now = new Date();
+  const batchNo = `RT${formatDate(now).replaceAll("-", "")}${String(retentionLogs.length + 1).padStart(4, "0")}`;
+  const details = buildRetentionDetails(iccids, operator, now);
+  const log = {
+    id: retentionLogs.length ? Math.max(...retentionLogs.map((item) => item.id)) + 1 : 1,
+    batchNo,
+    operator,
+    customerName,
+    type: "批量",
+    fileName,
+    sourceFile: sourceFile || null,
+    iccids,
+    totalCount: iccids.length,
+    successCount: 0,
+    failCount: 0,
+    result: "待执行",
+    applyAt: formatDateTime(now),
+    effectiveAt: "",
+    batchFailReason: "",
+    details
+  };
+  const allAcceptFailed = details.every((item) => item.result === "受理失败");
+  if (allAcceptFailed) {
+    log.effectiveAt = "";
+    syncRetentionBatchFromDetails(log);
+  } else {
+    log.effectiveAt = getCancelEffectiveAt(now);
+    syncRetentionBatchFromDetails(log);
+  }
+  retentionLogs.unshift(log);
+  details.forEach((detail) => appendRetentionDeviceLogIfTerminal(detail, log));
+  return log;
+}
+
+function renderRetentionTable(rows) {
+  const hideCustomer = isCardCancelCustomerOperator(getCardCancelSessionOperator());
+  const colCount = hideCustomer ? 11 : 12;
+  $("#tableHead").innerHTML = `
+    <tr>
+      <th>批次号</th>
+      <th>申请人</th>
+      ${hideCustomer ? "" : "<th>客户名称</th>"}
+      <th>申请文件</th>
+      <th>申请总数</th>
+      <th>成功数</th>
+      <th>失败数</th>
+      <th>状态</th>
+      <th>失败原因</th>
+      <th>申请时间</th>
+      <th>生效时间</th>
+      <th>操作</th>
+    </tr>
+  `;
+  $("#tableBody").innerHTML = rows.length ? rows.map((row) => `
+    <tr>
+      <td>${row.batchNo}</td>
+      <td>${row.operator}</td>
+      ${hideCustomer ? "" : `<td>${row.customerName}</td>`}
+      <td class="content-cell" title="${escapeAttr(row.fileName)}"><button type="button" class="file-download-btn" data-download-retention-file="${row.id}">${row.fileName}</button></td>
+      <td>${row.totalCount}</td>
+      <td>${row.successCount ?? 0}</td>
+      <td>${row.failCount ?? 0}</td>
+      <td><span class="status ${getRetentionStatusBadgeClass(row.result)}">${row.result}</span></td>
+      <td class="content-cell" title="${escapeAttr(getRetentionBatchFailReason(row))}">${getRetentionBatchFailReason(row)}</td>
+      <td>${row.applyAt}</td>
+      <td>${row.effectiveAt || "—"}</td>
+      <td>
+        <div class="op-group">
+          <button type="button" class="op-btn" data-retention-detail="${row.id}">明细</button>
+        </div>
+      </td>
+    </tr>
+  `).join("") : emptyRow(colCount);
+
+  $$("[data-download-retention-file]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const row = retentionLogs.find((item) => String(item.id) === button.dataset.downloadRetentionFile);
+      if (row) downloadRetentionFile(row);
+    });
+  });
+  $$("[data-retention-detail]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const row = retentionLogs.find((item) => String(item.id) === button.dataset.retentionDetail);
+      if (row) openRetentionDetailModal(row);
+    });
+  });
+}
+
+function openRetentionModal() {
+  const operator = getCardCancelSessionOperator();
+  const isCustomer = isCardCancelCustomerOperator(operator);
+  const fragment = $("#retentionModalTemplate").content.cloneNode(true);
+  const form = fragment.querySelector("#retentionForm");
+  const tip = fragment.querySelector("#retentionModalTip");
+  const customerField = fragment.querySelector("#retentionCustomerField");
+  if (tip) tip.hidden = false;
+  if (isCustomer && customerField) customerField.hidden = true;
+  const customerSelect = form.elements.customerName;
+  if (!isCustomer) {
+    customerSelect.innerHTML = `
+      <option value="">请选择</option>
+      ${customerOptions.map((name) => `<option value="${escapeAttr(name)}">${name}</option>`).join("")}
+    `;
+    customerSelect.required = true;
+  } else {
+    customerSelect.required = false;
+  }
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const customerName = isCustomer ? getCustomerNameForSessionOperator(operator) : form.elements.customerName.value;
+    const file = form.elements.batchFile.files[0];
+    if (!customerName || !file) {
+      showToast("请完整填写停机保号信息");
+      return;
+    }
+    const log = createRetentionBatch({
+      customerName,
+      fileName: file.name,
+      operator,
+      sourceFile: file
+    });
+    if (!log) {
+      showToast("该客户下没有可申请停机保号的卡片");
+      return;
+    }
+    closeModal(form.closest(".modal"));
+    render();
+    const hasAcceptFail = (log.details || []).some((item) => item.result === "受理失败");
+    const allAcceptFail = (log.details || []).every((item) => item.result === "受理失败");
+    if (allAcceptFail) showToast("全部 ICCID 受理失败");
+    else if (hasAcceptFail) showToast("已受理，部分 ICCID 受理失败，其余次月 1 日生效");
+    else showToast("已受理，次月 1 日生效");
+  });
+  openModal(fragment);
+}
+
+function exportRetentionDetail(row) {
+  const details = row.details || [];
+  if (!details.length) {
+    showToast("暂无停机保号明细");
+    return;
+  }
+  const headers = ["ICCID", "处理结果", "失败原因"];
+  const dataRows = details.map((detail) => [
+    detail.iccid,
+    detail.result,
+    getRetentionDetailFailReason(detail)
+  ]);
+  downloadBlob(
+    createXlsxFile(headers, dataRows),
+    `停机保号明细_${row.batchNo}.xlsx`,
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  );
+  showToast("导出成功");
+}
+
+function openRetentionDetailModal(row) {
+  const fragment = $("#retentionDetailModalTemplate").content.cloneNode(true);
+  fragment.querySelector("#retentionDetailSummary").innerHTML = `
+    <div class="iccid-lookup-item"><span>批次号</span><strong>${row.batchNo}</strong></div>
+    <div class="iccid-lookup-item"><span>客户名称</span><strong>${row.customerName}</strong></div>
+    <div class="iccid-lookup-item"><span>状态</span><strong>${row.result}</strong></div>
+    <div class="iccid-lookup-item"><span>生效时间</span><strong>${row.effectiveAt || "—"}</strong></div>
+  `;
+  fragment.querySelector("#retentionDetailBody").innerHTML = row.details.length ? row.details.map((detail) => {
+    const failReason = getRetentionDetailFailReason(detail);
+    return `
+    <tr>
+      <td>${detail.iccid}</td>
+      <td>${detail.result}</td>
+      <td class="content-cell" title="${escapeAttr(failReason)}">${failReason}</td>
+    </tr>
+  `;
+  }).join("") : emptyRow(3);
+  fragment.querySelector("#retentionDetailExport").addEventListener("click", () => exportRetentionDetail(row));
+  openModal(fragment);
+}
+
+function openRetentionLogModal() {
+  const fragment = $("#retentionLogModalTemplate").content.cloneNode(true);
+  const form = fragment.querySelector("#retentionLogFilter");
+  const body = fragment.querySelector("#retentionLogBody");
+  const pagination = fragment.querySelector("#retentionLogPagination");
+  const customerList = fragment.querySelector("#retentionLogCustomerOptions");
+  customerList.innerHTML = customerOptions.map((name) => `<option value="${escapeAttr(name)}"></option>`).join("");
+  const logState = { page: 1, pageSize: 10, filters: {} };
+
+  const getRows = () => flattenRetentionOperationLogs().filter((row) => {
+    const applyDate = row.applyAt.slice(0, 10);
+    const filters = logState.filters;
+    const inStart = !filters.startDate || applyDate >= filters.startDate;
+    const inEnd = !filters.endDate || applyDate <= filters.endDate;
+    return matchExact(row.operator, filters.operator)
+      && includes(row.batchNo, filters.batchNo)
+      && includes(row.iccid, filters.iccid)
+      && includes(row.customerName, filters.customerName)
+      && matchExact(row.status, filters.status)
+      && inStart
+      && inEnd;
+  });
+
+  const renderRows = () => {
+    const rows = getRows();
+    const totalPages = Math.max(1, Math.ceil(rows.length / logState.pageSize));
+    if (logState.page > totalPages) logState.page = totalPages;
+    const pageRows = rows.slice((logState.page - 1) * logState.pageSize, logState.page * logState.pageSize);
+    body.innerHTML = pageRows.length ? pageRows.map((row) => `
+      <tr>
+        <td>${row.iccid}</td>
+        <td>${row.batchNo}</td>
+        <td>${row.operator}</td>
+        <td>${row.customerName}</td>
+        <td><span class="status ${getRetentionStatusBadgeClass(row.status)}">${row.status}</span></td>
+        <td class="content-cell" title="${escapeAttr(row.failReason)}">${row.failReason}</td>
+        <td>${row.applyAt}</td>
+        <td>${row.effectiveAt}</td>
+      </tr>
+    `).join("") : `<tr><td colspan="8">暂无数据</td></tr>`;
+    pagination.innerHTML = `
+      <span>共 ${rows.length} 条</span>
+      ${Array.from({ length: totalPages }, (_, index) => `<button type="button" class="page-btn ${index + 1 === logState.page ? "active" : ""}" data-retention-log-page="${index + 1}">${index + 1}</button>`).join("")}
+    `;
+    $$("[data-retention-log-page]", pagination).forEach((button) => {
+      button.addEventListener("click", () => {
+        logState.page = Number(button.dataset.retentionLogPage);
+        renderRows();
+      });
+    });
+  };
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    logState.filters = Object.fromEntries(new FormData(form).entries());
+    logState.page = 1;
+    renderRows();
+  });
+  fragment.querySelector("#resetRetentionLog").addEventListener("click", () => {
+    form.reset();
+    logState.filters = {};
+    logState.page = 1;
+    renderRows();
+  });
+  fragment.querySelector("#exportRetentionLog").addEventListener("click", () => exportRetentionOperationLog(getRows()));
+  renderRows();
+  openModal(fragment);
+}
+
 function renderPackageModifyDetailTable(rows) {
   $("#tableHead").innerHTML = `
     <tr>
@@ -5124,12 +6172,13 @@ function exportSelectedPackageModifyDetails() {
   exportRows(selectedRows.length ? selectedRows : filteredRows, "修改详情导出");
 }
 
-function renderPagination(total, totalPages) {
+function renderPagination(total, totalPages, displayTotal) {
   const pageButtons = Array.from({ length: totalPages }, (_, index) => index + 1)
     .map((page) => `<button class="page-btn ${page === state.page ? "active" : ""}" data-page="${page}">${page}</button>`)
     .join("");
+  const totalLabel = displayTotal ?? total;
   $("#pagination").innerHTML = `
-    <span>共 ${total} 条</span>
+    <span>共 ${totalLabel} 条</span>
     <select id="pageSizeSelect">
       ${[10, 20, 50].map((size) => `<option value="${size}" ${size === state.pageSize ? "selected" : ""}>${size}条/页</option>`).join("")}
     </select>
@@ -6777,11 +7826,99 @@ function openDataPoolForm() {
 function openPackageForm() {
   const fragment = $("#packageFormTemplate").content.cloneNode(true);
   const form = fragment.querySelector("#packageForm");
+  const customerSelect = form.elements.customerName;
+  const quoteSelect = form.elements.quoteNo;
+  const pidInput = form.elements.customerPid;
+  const idleFeeField = fragment.querySelector("#packageIdleFeeField");
+  const idleFeeInput = form.elements.idleFeeDisplay;
+  const quotePreview = fragment.querySelector("#packageQuotePreview");
+  const regionBlock = fragment.querySelector("#packageQuoteRegionBlock");
+  const regionTags = fragment.querySelector("#packageQuoteRegionTags");
+  const regionBody = fragment.querySelector("#packageQuoteRegionBody");
+  const priceField = fragment.querySelector("#packagePriceField");
+  const totalField = fragment.querySelector("#packageTotalField");
+  const packageTypeSelect = form.elements.packageType;
+
+  const isMonthlyPaygPackage = () => packageTypeSelect.value === "Monthly PAYG";
+
+  const applyMonthlyPaygFieldVisibility = () => {
+    const payg = isMonthlyPaygPackage();
+    [priceField, totalField, regionBlock].forEach((node) => {
+      if (node) node.classList.toggle("payg-hidden", payg);
+    });
+  };
+
+  customerSelect.innerHTML = `<option value="">请选择</option>${customerOptions.map((name) => `<option value="${escapeAttr(name)}">${name}</option>`).join("")}`;
+  const quoteNumbers = [...new Set(packageQuotes.map((item) => item.quoteNo).filter(Boolean))];
+  quoteSelect.innerHTML = `<option value="">请选择</option>${quoteNumbers.map((no) => `<option value="${escapeAttr(no)}">${no}</option>`).join("")}`;
+
+  const syncCustomerPid = () => {
+    const pid = packageCustomerPidMap[customerSelect.value] || "";
+    pidInput.value = pid;
+  };
+
+  const clearQuotePreview = () => {
+    idleFeeField.hidden = true;
+    idleFeeInput.value = "";
+    quotePreview.hidden = true;
+    regionTags.innerHTML = "";
+    regionBody.innerHTML = "";
+  };
+
+  const renderQuotePreview = () => {
+    const quote = findPackageQuoteByNo(quoteSelect.value);
+    if (!quote) {
+      clearQuotePreview();
+      return;
+    }
+    idleFeeField.hidden = false;
+    idleFeeInput.value = quote.idleFee ?? "—";
+    quotePreview.hidden = false;
+    applyMonthlyPaygFieldVisibility();
+    const details = (quote.regionDetails || []).filter((item) => !quote.regions?.length || quote.regions.includes(item.priceGroup));
+    if (!isMonthlyPaygPackage()) {
+      regionTags.innerHTML = (quote.regions?.length ? quote.regions : details.map((item) => item.priceGroup))
+        .map((name) => `<span class="quote-region-tag">${escapeAttr(name)}</span>`)
+        .join("");
+    } else {
+      regionTags.innerHTML = "";
+    }
+    regionBody.innerHTML = details.length ? details.map((item) => {
+      const country = formatQuoteCountryDisplay(item.country);
+      return `
+      <tr>
+        <td>${escapeAttr(item.priceGroup)}</td>
+        <td class="quote-country" title="${escapeAttr(country.title || country.text)}">${escapeAttr(country.text)}</td>
+        <td>${escapeAttr(item.unit ?? "—")}</td>
+        <td>${escapeAttr(item.included ?? "—")}</td>
+        <td>${escapeAttr(item.overage ?? "—")}</td>
+        <td>${escapeAttr(item.rent ?? "—")}</td>
+      </tr>
+    `;
+    }).join("") : `<tr><td colspan="6">暂无区域明细</td></tr>`;
+  };
+
+  customerSelect.addEventListener("change", syncCustomerPid);
+  quoteSelect.addEventListener("change", renderQuotePreview);
+  packageTypeSelect.addEventListener("change", () => {
+    applyMonthlyPaygFieldVisibility();
+    if (quoteSelect.value) renderQuotePreview();
+  });
+  applyMonthlyPaygFieldVisibility();
+
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     const formData = Object.fromEntries(new FormData(form).entries());
     if (!formData.customerName) {
       showToast("请选择客户名称");
+      return;
+    }
+    if (!packageCustomerPidMap[formData.customerName]) {
+      showToast("未找到该客户 PID，请确认客户名称");
+      return;
+    }
+    if (!formData.quoteNo) {
+      showToast("请选择报价编号");
       return;
     }
     packages.unshift({
@@ -6793,7 +7930,8 @@ function openPackageForm() {
       contractMonths: formData.contractMonths || "-",
       bearerNetwork: formData.bearerNetwork || "-",
       coreNetwork: formData.coreNetwork || "-",
-      remark: formData.remark || ""
+      remark: formData.remark || "",
+      quoteNo: formData.quoteNo
     });
     closeModal(form);
     state.page = 1;
@@ -6955,6 +8093,34 @@ function exportCardCancelOperationLog(rows) {
   downloadBlob(
     createXlsxFile(headers, dataRows),
     `注销操作日志_${new Date().toISOString().slice(0, 10)}.xlsx`,
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  );
+  showToast("导出成功");
+}
+
+function downloadRetentionFile(row) {
+  downloadCardCancelFile(row);
+}
+
+function exportRetentionOperationLog(rows) {
+  if (!rows.length) {
+    showToast("暂无可导出数据");
+    return;
+  }
+  const headers = ["ICCID", "批次号", "申请人", "客户名称", "状态", "失败原因", "申请时间", "生效时间"];
+  const dataRows = rows.map((row) => [
+    row.iccid,
+    row.batchNo,
+    row.operator,
+    row.customerName,
+    row.status,
+    row.failReason,
+    row.applyAt,
+    row.effectiveAt
+  ]);
+  downloadBlob(
+    createXlsxFile(headers, dataRows),
+    `停机保号操作日志_${new Date().toISOString().slice(0, 10)}.xlsx`,
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
   );
   showToast("导出成功");
