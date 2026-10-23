@@ -925,6 +925,88 @@ const deviceRecords = [
   }
 ];
 
+const deviceBatchOpOperators = ["admin", "李明", "赵红"];
+const deviceBatchOpLogs = [
+  {
+    id: 1,
+    batchNo: "DO202610220001",
+    operator: "admin",
+    customerName: "万利通信技术（深圳）有限公司",
+    fileName: "restore_wanli_20261022.xlsx",
+    type: "复机",
+    status: "全部成功",
+    failReason: "—",
+    operatedAt: "2026-10-22 09:18:26",
+    iccids: ["89860404112026060001", "89860404112026062310"],
+    details: [
+      { iccid: "89860404112026060001", result: "成功", failReason: "—" },
+      { iccid: "89860404112026062310", result: "成功", failReason: "—" }
+    ]
+  },
+  {
+    id: 2,
+    batchNo: "DO202610210014",
+    operator: "李明",
+    customerName: "中亿（深圳）信息科技有限公司",
+    fileName: "suspend_zhongyi.xls",
+    type: "停机",
+    status: "部份成功",
+    failReason: "部分卡片停机失败",
+    operatedAt: "2026-10-21 16:42:08",
+    iccids: ["89860404112026063001", "89860404112026069999"],
+    details: [
+      { iccid: "89860404112026063001", result: "成功", failReason: "—" },
+      { iccid: "89860404112026069999", result: "失败", failReason: "ICCID 不存在" }
+    ]
+  },
+  {
+    id: 3,
+    batchNo: "DO202610200008",
+    operator: "赵红",
+    customerName: "Ingoo Holding Limited",
+    fileName: "overage_ingoo.xlsx",
+    type: "超量",
+    status: "全部失败",
+    failReason: "卡片不属于该客户",
+    operatedAt: "2026-10-20 11:05:33",
+    iccids: ["89860404112026060001"],
+    details: [
+      { iccid: "89860404112026060001", result: "失败", failReason: "卡片不属于该客户" }
+    ]
+  },
+  {
+    id: 4,
+    batchNo: "DO202610180003",
+    operator: "admin",
+    customerName: "7BIT LIMITED",
+    fileName: "restore_7bit.xlsx",
+    type: "复机",
+    status: "全部成功",
+    failReason: "—",
+    operatedAt: "2026-10-18 14:22:51",
+    iccids: ["89860404112026063002"],
+    details: [
+      { iccid: "89860404112026063002", result: "成功", failReason: "—" }
+    ]
+  },
+  {
+    id: 5,
+    batchNo: "DO202610150021",
+    operator: "李明",
+    customerName: "万利通信技术（深圳）有限公司",
+    fileName: "overage_wanli.xls",
+    type: "超量",
+    status: "部份成功",
+    failReason: "部分卡片超量失败",
+    operatedAt: "2026-10-15 10:07:19",
+    iccids: ["89860404112026060001", "89860404112026999999"],
+    details: [
+      { iccid: "89860404112026060001", result: "成功", failReason: "—" },
+      { iccid: "89860404112026999999", result: "失败", failReason: "ICCID 不存在" }
+    ]
+  }
+];
+
 function findDeviceRecord(iccid) {
   return deviceRecords.find((row) => row.iccid === iccid) || null;
 }
@@ -1031,7 +1113,16 @@ const packageRenewalLogs = [
 ];
 
 function getCardMarket(iccid) {
-  return String(iccid || "").startsWith("894446") ? "英国" : "巴西";
+  const id = String(iccid || "");
+  if (id.startsWith("8944")) return "英国";
+  if (id.startsWith("8955") || id.startsWith("8986")) return "巴西";
+  return "";
+}
+
+function getCardCancelBatchCountry(row) {
+  if (row.country) return row.country;
+  const iccid = (row.iccids && row.iccids[0]) || row.details?.[0]?.iccid || "";
+  return getCardMarket(iccid) || "—";
 }
 
 function getCancelEffectiveAt(fromDate = new Date()) {
@@ -1044,14 +1135,17 @@ function getCancelEffectiveAt(fromDate = new Date()) {
 const cardCancelOperatorOptions = ["客户-王利", "客户-赵敏", "admin"];
 
 const CARD_CANCEL_DETAIL_FAIL_RESULTS = ["执行失败", "已驳回"];
+const CARD_CANCEL_BATCH_STATUSES = ["待审核", "已驳回", "待执行", "全部成功", "部份成功", "全部失败"];
+const CARD_CANCEL_COUNTRY_OPTIONS = ["英国", "巴西"];
 function getCardCancelDetailFailReason(detail) {
   if (!CARD_CANCEL_DETAIL_FAIL_RESULTS.includes(detail.result)) return "--";
   return detail.failReason || "注销失败";
 }
 
 function getCardCancelStatusBadgeClass(status) {
-  if (["执行成功", "待执行"].includes(status)) return "success";
-  if (["已驳回", "执行失败"].includes(status)) return "fail";
+  if (["全部成功", "执行成功", "待执行"].includes(status)) return "success";
+  if (["已驳回", "全部失败", "执行失败"].includes(status)) return "fail";
+  if (status === "部份成功") return "running";
   return "running";
 }
 
@@ -1075,38 +1169,40 @@ function isCardCancelCustomerOperator(operator) {
 
 function getCardCancelBatchFailReason(row) {
   if (row.result === "已驳回") return row.rejectReason || "—";
-  if (row.result === "执行失败") return row.batchFailReason || "部分卡片注销失败";
+  if (row.result === "全部失败" || row.result === "部份成功") return row.batchFailReason || "部分卡片注销失败";
   return "—";
 }
 
 function syncCardCancelBatchFromDetails(log) {
   const details = log.details || [];
   if (!details.length || ["待审核", "已驳回"].includes(log.result)) return;
+  const executeFailCount = details.filter((item) => item.result === "执行失败").length;
   const failCount = details.filter((item) => CARD_CANCEL_DETAIL_FAIL_RESULTS.includes(item.result)).length;
   const pendingCount = details.filter((item) => item.result === "待执行").length;
   const successCount = details.filter((item) => item.result === "执行成功").length;
   log.failCount = failCount;
   log.successCount = successCount + pendingCount;
-  if (failCount > 0) {
-    log.result = "执行失败";
+  if (executeFailCount > 0 && successCount > 0) {
+    log.result = "部份成功";
+    if (!log.batchFailReason) log.batchFailReason = "部分卡片注销失败";
+  } else if (executeFailCount > 0) {
+    log.result = "全部失败";
     if (!log.batchFailReason) {
-      log.batchFailReason = failCount < details.length
-        ? "部分卡片注销失败"
-        : (details.find((item) => item.result === "执行失败")?.failReason || "卡片注销失败");
+      log.batchFailReason = details.find((item) => item.result === "执行失败")?.failReason || "卡片注销失败";
     }
   } else if (pendingCount > 0) {
     log.result = "待执行";
   } else if (successCount === details.length) {
-    log.result = "执行成功";
+    log.result = "全部成功";
   }
 }
 
 function getCardCancelCardExecutedAt(batch, detail) {
-  if (detail.result === "执行成功" || batch.result === "执行成功") return batch.effectiveAt || batch.auditAt || "—";
+  if (detail.result === "执行成功" || batch.result === "全部成功") return batch.effectiveAt || batch.auditAt || "—";
   if (detail.result === "待执行" || batch.result === "待执行") return batch.effectiveAt || "—";
   if (batch.result === "已驳回" || detail.result === "已驳回") return batch.auditAt || "—";
   if (batch.result === "待审核" || detail.result === "待审核") return "—";
-  if (detail.result === "执行失败" || batch.result === "执行失败") return batch.auditAt || batch.applyAt || "—";
+  if (detail.result === "执行失败" || batch.result === "全部失败" || batch.result === "部份成功") return batch.auditAt || batch.applyAt || "—";
   return batch.auditAt || batch.applyAt || "—";
 }
 
@@ -1117,6 +1213,7 @@ function flattenCardCancelOperationLogs() {
       rows.push({
         iccid: detail.iccid,
         batchNo: batch.batchNo,
+        country: getCardCancelBatchCountry(batch) || getCardMarket(detail.iccid) || "—",
         operator: batch.operator,
         customerName: batch.customerName,
         status: detail.result,
@@ -1553,7 +1650,7 @@ const cardCancelLogs = [
     totalCount: 2,
     successCount: 2,
     failCount: 0,
-    result: "执行成功",
+    result: "全部成功",
     applyAt: "2026-08-20 14:22:09",
     auditAt: "",
     auditor: "",
@@ -1576,7 +1673,7 @@ const cardCancelLogs = [
     totalCount: 1,
     successCount: 1,
     failCount: 0,
-    result: "执行成功",
+    result: "全部成功",
     applyAt: "2026-07-15 10:33:27",
     auditAt: "2026-07-15 11:05:41",
     auditor: "李明",
@@ -1596,7 +1693,7 @@ const cardCancelLogs = [
     totalCount: 1,
     successCount: 1,
     failCount: 0,
-    result: "执行成功",
+    result: "全部成功",
     applyAt: "2026-06-28 08:56:12",
     auditAt: "",
     auditor: "",
@@ -1665,7 +1762,7 @@ const cardCancelLogs = [
     totalCount: 2,
     successCount: 0,
     failCount: 2,
-    result: "执行失败",
+    result: "全部失败",
     batchFailReason: "英国平台注销 API 响应超时",
     applyAt: "2026-09-25 15:30:00",
     auditAt: "2026-09-25 16:02:18",
@@ -1685,11 +1782,11 @@ const cardCancelLogs = [
     customerName: "天翼物联",
     type: "批量",
     fileName: "tianyi_cancel_partial_fail_20260912.xlsx",
-    iccids: ["89860404112026062805", "89444610503500051173"],
+    iccids: ["89860404112026062805", "89860404112026062707"],
     totalCount: 2,
     successCount: 1,
     failCount: 1,
-    result: "执行失败",
+    result: "部份成功",
     batchFailReason: "部分卡片注销失败",
     applyAt: "2026-09-12 10:18:44",
     auditAt: "",
@@ -1699,12 +1796,12 @@ const cardCancelLogs = [
     needAudit: false,
     details: [
       { iccid: "89860404112026062805", market: "巴西", apiStatus: "-", result: "执行成功", failReason: "" },
-      { iccid: "89444610503500051173", market: "英国", apiStatus: "英国平台状态校验失败", result: "执行失败", failReason: "英国平台返回：卡片处于测试期，不可注销" }
+      { iccid: "89860404112026062707", market: "巴西", apiStatus: "-", result: "执行失败", failReason: "平台接口异常，注销未生效" }
     ]
   }
 ];
 
-cardCancelLogs.filter((log) => log.result === "执行成功").forEach((log) => applyCancelStatusToCards(
+cardCancelLogs.filter((log) => ["全部成功", "部份成功"].includes(log.result)).forEach((log) => applyCancelStatusToCards(
   (log.details || []).filter((detail) => detail.result === "执行成功").map((detail) => detail.iccid)
 ));
 
@@ -2293,7 +2390,8 @@ function renderFilter() {
         ${fieldSelect("申请人", "operator", cardCancelOperatorOptions, filters.operator)}
         ${fieldInput("批次号", "batchNo", filters.batchNo)}
         ${fieldDatalist("客户名称", "customerName", filters.customerName, customerOptions)}
-        ${fieldSelect("状态", "result", ["待审核", "已驳回", "待执行", "执行成功", "执行失败"], filters.result)}
+        ${fieldSelect("状态", "result", CARD_CANCEL_BATCH_STATUSES, filters.result)}
+        ${fieldSelect("国家", "country", CARD_CANCEL_COUNTRY_OPTIONS, filters.country)}
         <label class="field">
           <span>申请时间</span>
           <div class="range-row">
@@ -2820,23 +2918,36 @@ function renderToolbar() {
 
   if (state.module === "device") {
     if (!state.deviceSelectedIccid) {
+      const deviceActIcon = (d) => `<svg class="device-act-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
       toolbar.innerHTML = `
         <div class="device-toolbar-actions">
-          <button type="button" class="btn pool-move">移动卡</button>
-          <button type="button" class="btn pool-add">发送短信</button>
-          <button type="button" class="btn pool-adjust">复机</button>
-          <button type="button" class="btn pool-leave">停机</button>
-          <button type="button" class="btn pool-export">延期</button>
-          <button type="button" class="btn orange">解绑</button>
-          <button type="button" class="btn export">导出</button>
-          <button type="button" class="btn primary">批量续费</button>
-          <button type="button" class="btn ghost">设置上网地址</button>
-          <button type="button" class="btn ghost">流量刷新</button>
-          <button type="button" class="btn ghost">数据清零</button>
+          <button type="button" class="btn device-act device-act-move">${deviceActIcon('<rect x="6" y="3" width="12" height="18" rx="2"/><path d="M10 7h4M10 17h4"/>')}移动 SIM</button>
+          <button type="button" class="btn device-act device-act-sms">${deviceActIcon('<path d="M21 12a8 8 0 0 1-8 8H7l-4 3V12a8 8 0 1 1 18 0z"/>')}短信发送</button>
+          <button type="button" class="btn device-act device-act-peach">${deviceActIcon('<path d="M12 2v4M8.5 6.5a7 7 0 1 0 7 0"/>')}复机</button>
+          <button type="button" class="btn device-act device-act-peach">${deviceActIcon('<circle cx="12" cy="12" r="8"/><path d="M12 8v8"/>')}停机</button>
+          <button type="button" class="btn device-act device-act-peach">${deviceActIcon('<path d="M4 14a8 8 0 0 1 16 0"/><path d="M12 14v-3M8 14l-1-2M16 14l1-2"/>')}超量</button>
+          <button type="button" class="btn device-act device-act-peach">${deviceActIcon('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 7-2"/>')}解锁</button>
+          <button type="button" class="btn device-act device-act-peach">${deviceActIcon('<path d="M12 4v10M8 10l4 4 4-4M5 18h14"/>')}导出</button>
+          <button type="button" class="btn device-act device-act-amber">${deviceActIcon('<circle cx="12" cy="12" r="8"/><path d="M12 8v8M8 12h8"/>')}批量绑定</button>
+          <button type="button" class="btn device-act device-act-amber">${deviceActIcon('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>')}批量关闭绑定</button>
+          <button type="button" class="btn device-act device-act-amber">${deviceActIcon('<circle cx="12" cy="12" r="8"/><path d="M8 12h8"/>')}批量解绑</button>
+          <button type="button" class="btn device-act device-act-amber">${deviceActIcon('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 7-2"/>')}批量解锁</button>
+          <button type="button" class="btn device-act device-act-log">${deviceActIcon('<rect x="5" y="4" width="14" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/>')}操作日志</button>
         </div>
       `;
       $$(".device-toolbar-actions .btn").forEach((button) => {
-        button.addEventListener("click", () => showToast(`${button.textContent}（演示）`));
+        button.addEventListener("click", () => {
+          const label = button.textContent.trim();
+          if (label === "复机" || label === "停机" || label === "超量") {
+            openDeviceBatchOpModal(label);
+            return;
+          }
+          if (label === "操作日志") {
+            openDeviceBatchOpLogModal();
+            return;
+          }
+          showToast(`${label}（演示）`);
+        });
       });
     } else if (state.deviceTab === "smsSession") {
       toolbar.innerHTML = `<button class="btn export" id="deviceSmsExportBtn">导出</button>`;
@@ -3121,6 +3232,7 @@ function getFilteredRows() {
         && includes(row.batchNo, filters.batchNo)
         && includes(row.customerName, filters.customerName)
         && matchExact(row.result, filters.result)
+        && matchExact(getCardCancelBatchCountry(row), filters.country)
         && inStart
         && inEnd;
     }).sort((a, b) => b.applyAt.localeCompare(a.applyAt));
@@ -5514,16 +5626,16 @@ function updateCardCancelApproveButton() {
   if (button) button.disabled = state.selectedCardCancelAudits.size === 0;
 }
 
-function getMockCancelIccids(customerName) {
+function getMockCancelIccids(customerName, country) {
   return packageRenewals
-    .filter((card) => card.customerName === customerName && card.status !== "cancel")
+    .filter((card) => card.customerName === customerName && card.status !== "cancel" && (!country || getCardMarket(card.iccid) === country))
     .map((card) => card.iccid)
     .slice(0, 3);
 }
 
-function createCardCancelBatch({ customerName, fileName, needAudit, operator, sourceFile }) {
-  const iccids = getMockCancelIccids(customerName);
-  if (!iccids.length) return null;
+function createCardCancelBatch({ customerName, country, fileName, needAudit, operator, sourceFile, iccids }) {
+  const resolvedIccids = iccids?.length ? iccids : getMockCancelIccids(customerName, country);
+  if (!resolvedIccids.length) return null;
   const now = new Date();
   const batchNo = `CC${formatDate(now).replaceAll("-", "")}${String(cardCancelLogs.length + 1).padStart(4, "0")}`;
   const log = {
@@ -5531,11 +5643,12 @@ function createCardCancelBatch({ customerName, fileName, needAudit, operator, so
     batchNo,
     operator,
     customerName,
+    country,
     type: "批量",
     fileName,
     sourceFile: sourceFile || null,
-    iccids,
-    totalCount: iccids.length,
+    iccids: resolvedIccids,
+    totalCount: resolvedIccids.length,
     successCount: 0,
     failCount: 0,
     result: needAudit ? "待审核" : "待执行",
@@ -5545,7 +5658,7 @@ function createCardCancelBatch({ customerName, fileName, needAudit, operator, so
     effectiveAt: needAudit ? "" : getCancelEffectiveAt(now),
     rejectReason: "",
     needAudit,
-    details: buildCancelDetails(iccids)
+    details: buildCancelDetails(resolvedIccids)
   };
   cardCancelLogs.unshift(log);
   if (!needAudit) {
@@ -5563,6 +5676,7 @@ function renderCardCancelTable(rows) {
     <tr>
       <th><input type="checkbox" class="checkbox" id="cardCancelCheckAll" ${pendingRows.length && selectedPendingCount === pendingRows.length ? "checked" : ""} ${pendingRows.length ? "" : "disabled"}></th>
       <th>批次号</th>
+      <th>国家</th>
       <th>申请人</th>
       <th>客户名称</th>
       <th>注销文件</th>
@@ -5584,6 +5698,7 @@ function renderCardCancelTable(rows) {
         ? `<input type="checkbox" class="checkbox" data-card-cancel-id="${row.id}" ${state.selectedCardCancelAudits.has(row.id) ? "checked" : ""}>`
         : `<input type="checkbox" class="checkbox" disabled>`}</td>
       <td>${row.batchNo}</td>
+      <td>${getCardCancelBatchCountry(row)}</td>
       <td>${row.operator}</td>
       <td>${row.customerName}</td>
       <td class="content-cell" title="${escapeAttr(row.fileName)}"><button type="button" class="file-download-btn" data-download-card-cancel-file="${row.id}">${row.fileName}</button></td>
@@ -5605,7 +5720,7 @@ function renderCardCancelTable(rows) {
         </div>
       </td>
     </tr>
-  `).join("") : emptyRow(15);
+  `).join("") : emptyRow(16);
 
   $$("[data-download-card-cancel-file]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -5689,23 +5804,38 @@ function openCardCancelModal() {
     <option value="">请选择</option>
     ${customerOptions.map((name) => `<option value="${escapeAttr(name)}">${name}</option>`).join("")}
   `;
-  form.addEventListener("submit", (event) => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const customerName = form.elements.customerName.value;
+    const country = form.elements.country.value;
     const file = form.elements.batchFile.files[0];
-    if (!customerName || !file) {
+    if (!customerName || !country || !file) {
       showToast("请完整填写注销信息");
       return;
     }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast("文件大小不能超过 5MB");
+      return;
+    }
+    const parsedIccids = await readIccidsFromUpload(file);
+    if (parsedIccids.length) {
+      const mismatched = parsedIccids.filter((iccid) => getCardMarket(iccid) !== country);
+      if (mismatched.length) {
+        showToast(`文件中存在不属于「${country}」的 ICCID，请检查后重新上传`);
+        return;
+      }
+    }
     const log = createCardCancelBatch({
       customerName,
+      country,
       fileName: file.name,
       needAudit,
       operator,
-      sourceFile: file
+      sourceFile: file,
+      iccids: parsedIccids
     });
     if (!log) {
-      showToast("该客户下没有可注销的卡片");
+      showToast(`该客户下没有可注销的${country}卡片`);
       return;
     }
     closeModal(form.closest(".modal"));
@@ -5804,6 +5934,7 @@ function openCardCancelLogModal() {
       && includes(row.iccid, logState.filters.iccid)
       && includes(row.customerName, logState.filters.customerName)
       && matchExact(row.status, logState.filters.status)
+      && matchExact(row.country, logState.filters.country)
       && inStart
       && inEnd;
   });
@@ -5817,6 +5948,7 @@ function openCardCancelLogModal() {
       <tr>
         <td>${row.iccid}</td>
         <td>${row.batchNo}</td>
+        <td>${row.country}</td>
         <td>${row.operator}</td>
         <td>${row.customerName}</td>
         <td><span class="status ${getCardCancelStatusBadgeClass(row.status)}">${row.status}</span></td>
@@ -5826,7 +5958,7 @@ function openCardCancelLogModal() {
         <td>${row.executedAt}</td>
         <td>${row.auditor}</td>
       </tr>
-    `).join("") : `<tr><td colspan="10">暂无数据</td></tr>`;
+    `).join("") : `<tr><td colspan="11">暂无数据</td></tr>`;
     pagination.innerHTML = `
       <span>共 ${rows.length} 条</span>
       ${Array.from({ length: totalPages }, (_, index) => `<button type="button" class="page-btn ${index + 1 === logState.page ? "active" : ""}" data-card-cancel-log-page="${index + 1}">${index + 1}</button>`).join("")}
@@ -8072,15 +8204,257 @@ function downloadCardCancelFile(row) {
   showToast("文件下载成功");
 }
 
+function getDeviceBatchOpFailReason(row) {
+  if (row.status === "全部失败" || row.status === "部份成功") return row.failReason || "部分卡片处理失败";
+  return "—";
+}
+
+function applyDeviceBatchOpToCard(device, type) {
+  const now = formatDateTime(new Date());
+  if (type === "复机") {
+    device.status = "active";
+    device.statusAt = now;
+    return;
+  }
+  if (type === "停机") {
+    device.status = "suspend";
+    device.statusAt = now;
+    return;
+  }
+  if (type === "超量") {
+    device.overageEnabled = true;
+  }
+}
+
+function resolveDeviceBatchOpIccids(customerName, parsedIccids) {
+  if (parsedIccids.length) return [...new Set(parsedIccids)];
+  return deviceRecords
+    .filter((row) => row.customerName === customerName)
+    .map((row) => row.iccid)
+    .slice(0, 3);
+}
+
+function createDeviceBatchOp({ type, customerName, fileName, operator, sourceFile, iccids }) {
+  const resolvedIccids = resolveDeviceBatchOpIccids(customerName, iccids || []);
+  if (!resolvedIccids.length) return null;
+  const details = resolvedIccids.map((iccid) => {
+    const device = findDeviceRecord(iccid);
+    if (!device) {
+      return { iccid, result: "失败", failReason: "ICCID 不存在" };
+    }
+    if (device.customerName !== customerName) {
+      return { iccid, result: "失败", failReason: "卡片不属于该客户" };
+    }
+    applyDeviceBatchOpToCard(device, type);
+    return { iccid, result: "成功", failReason: "—" };
+  });
+  const successCount = details.filter((item) => item.result === "成功").length;
+  const failCount = details.length - successCount;
+  const status = failCount === 0 ? "全部成功" : successCount === 0 ? "全部失败" : "部份成功";
+  const failReason = status === "全部成功"
+    ? "—"
+    : details.find((item) => item.result === "失败")?.failReason || "部分卡片处理失败";
+  const log = {
+    id: Date.now(),
+    batchNo: `DO${new Date().toISOString().slice(0, 10).replaceAll("-", "")}${String(deviceBatchOpLogs.length + 1).padStart(4, "0")}`,
+    operator,
+    customerName,
+    fileName,
+    type,
+    status,
+    failReason,
+    operatedAt: formatDateTime(new Date()),
+    sourceFile,
+    iccids: resolvedIccids,
+    details
+  };
+  deviceBatchOpLogs.unshift(log);
+  return log;
+}
+
+function downloadDeviceBatchOpFile(row) {
+  if (row.sourceFile) {
+    downloadBlob(row.sourceFile, row.sourceFile.name || row.fileName || "device_batch_op.xlsx", row.sourceFile.type || "application/octet-stream");
+    showToast("文件下载成功");
+    return;
+  }
+  const fileName = row.fileName || "device_batch_op.xlsx";
+  const iccidRows = (row.iccids || []).map((iccid) => [iccid]);
+  if (/\.xls$/i.test(fileName)) {
+    const html = `<table><tr><th>ICCID</th></tr>${iccidRows.map(([iccid]) => `<tr><td>${iccid}</td></tr>`).join("")}</table>`;
+    downloadBlob(html, fileName, "application/vnd.ms-excel;charset=utf-8");
+  } else {
+    downloadBlob(createXlsxFile(["ICCID"], iccidRows), fileName, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  }
+  showToast("文件下载成功");
+}
+
+function exportDeviceBatchOpDetail(row) {
+  const headers = ["ICCID", "处理结果", "失败原因"];
+  const rows = (row.details || []).map((detail) => [detail.iccid, detail.result, detail.failReason || "—"]);
+  downloadBlob(
+    createXlsxFile(headers, rows),
+    `操作明细_${row.batchNo}.xlsx`,
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  );
+  showToast("导出成功");
+}
+
+function openDeviceBatchOpModal(type) {
+  const fragment = $("#deviceBatchOpModalTemplate").content.cloneNode(true);
+  const form = fragment.querySelector("#deviceBatchOpForm");
+  fragment.querySelector("#deviceBatchOpTitle").textContent = type;
+  const customerSelect = form.elements.customerName;
+  customerSelect.innerHTML = `
+    <option value="">请选择</option>
+    ${customerOptions.map((name) => `<option value="${escapeAttr(name)}">${name}</option>`).join("")}
+  `;
+  bindUploadFileName(fragment);
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const customerName = form.elements.customerName.value;
+    const file = form.elements.batchFile.files[0];
+    if (!customerName || !file) {
+      showToast("请完整填写批量操作信息");
+      return;
+    }
+    if (!validateDataPoolImportFile(file)) return;
+    const parsedIccids = await readIccidsFromUpload(file);
+    const log = createDeviceBatchOp({
+      type,
+      customerName,
+      fileName: file.name,
+      operator: getCardCancelSessionOperator(),
+      sourceFile: file,
+      iccids: parsedIccids
+    });
+    if (!log) {
+      showToast("该客户下没有可操作的卡片");
+      return;
+    }
+    closeModal(form.closest(".modal"));
+    render();
+    showToast(`${type}已提交，立即生效`);
+  });
+  openModal(fragment);
+}
+
+function openDeviceBatchOpDetailModal(row) {
+  const fragment = $("#deviceBatchOpDetailModalTemplate").content.cloneNode(true);
+  fragment.querySelector("#deviceBatchOpDetailSummary").innerHTML = `
+    <div class="iccid-lookup-item"><span>批次号</span><strong>${row.batchNo}</strong></div>
+    <div class="iccid-lookup-item"><span>客户名称</span><strong>${row.customerName}</strong></div>
+    <div class="iccid-lookup-item"><span>类型</span><strong>${row.type}</strong></div>
+    <div class="iccid-lookup-item"><span>状态</span><strong>${row.status}</strong></div>
+    <div class="iccid-lookup-item"><span>操作时间</span><strong>${row.operatedAt}</strong></div>
+  `;
+  fragment.querySelector("#deviceBatchOpDetailBody").innerHTML = row.details.length ? row.details.map((detail) => `
+    <tr>
+      <td>${detail.iccid}</td>
+      <td>${detail.result}</td>
+      <td class="content-cell" title="${escapeAttr(detail.failReason || "—")}">${detail.failReason || "—"}</td>
+    </tr>
+  `).join("") : emptyRow(3);
+  fragment.querySelector("#deviceBatchOpDetailExport").addEventListener("click", () => exportDeviceBatchOpDetail(row));
+  openModal(fragment, true);
+}
+
+function openDeviceBatchOpLogModal() {
+  const fragment = $("#deviceBatchOpLogModalTemplate").content.cloneNode(true);
+  const form = fragment.querySelector("#deviceBatchOpLogFilter");
+  const body = fragment.querySelector("#deviceBatchOpLogBody");
+  const pagination = fragment.querySelector("#deviceBatchOpLogPagination");
+  form.elements.operator.innerHTML = `
+    <option value="">请选择</option>
+    ${deviceBatchOpOperators.map((name) => `<option value="${escapeAttr(name)}">${name}</option>`).join("")}
+  `;
+  form.elements.customerName.innerHTML = `
+    <option value="">请选择</option>
+    ${customerOptions.map((name) => `<option value="${escapeAttr(name)}">${name}</option>`).join("")}
+  `;
+  const logState = { page: 1, pageSize: 10, filters: {} };
+
+  const getRows = () => deviceBatchOpLogs.filter((row) => {
+    const operateDate = row.operatedAt.slice(0, 10);
+    const inStart = !logState.filters.startDate || operateDate >= logState.filters.startDate;
+    const inEnd = !logState.filters.endDate || operateDate <= logState.filters.endDate;
+    return matchExact(row.operator, logState.filters.operator)
+      && includes(row.batchNo, logState.filters.batchNo)
+      && matchExact(row.customerName, logState.filters.customerName)
+      && matchExact(row.type, logState.filters.type)
+      && matchExact(row.status, logState.filters.status)
+      && inStart
+      && inEnd;
+  });
+
+  const renderRows = () => {
+    const rows = getRows();
+    const totalPages = Math.max(1, Math.ceil(rows.length / logState.pageSize));
+    if (logState.page > totalPages) logState.page = totalPages;
+    const pageRows = rows.slice((logState.page - 1) * logState.pageSize, logState.page * logState.pageSize);
+    body.innerHTML = pageRows.length ? pageRows.map((row) => `
+      <tr>
+        <td>${row.batchNo}</td>
+        <td>${row.operator}</td>
+        <td class="content-cell" title="${escapeAttr(row.customerName)}">${row.customerName}</td>
+        <td class="content-cell" title="${escapeAttr(row.fileName)}"><button type="button" class="file-download-btn" data-download-device-batch-file="${row.id}">${row.fileName}</button></td>
+        <td>${row.type}</td>
+        <td><span class="status ${getCardCancelStatusBadgeClass(row.status)}">${row.status}</span></td>
+        <td class="content-cell" title="${escapeAttr(getDeviceBatchOpFailReason(row))}">${getDeviceBatchOpFailReason(row)}</td>
+        <td>${row.operatedAt}</td>
+        <td><button type="button" class="op-btn" data-device-batch-detail="${row.id}">明细</button></td>
+      </tr>
+    `).join("") : `<tr><td colspan="9">暂无数据</td></tr>`;
+    pagination.innerHTML = `
+      <span>共 ${rows.length} 条</span>
+      ${Array.from({ length: totalPages }, (_, index) => `<button type="button" class="page-btn ${index + 1 === logState.page ? "active" : ""}" data-device-batch-log-page="${index + 1}">${index + 1}</button>`).join("")}
+    `;
+    $$("[data-device-batch-log-page]", pagination).forEach((button) => {
+      button.addEventListener("click", () => {
+        logState.page = Number(button.dataset.deviceBatchLogPage);
+        renderRows();
+      });
+    });
+    $$("[data-download-device-batch-file]", body).forEach((button) => {
+      button.addEventListener("click", () => {
+        const row = deviceBatchOpLogs.find((item) => String(item.id) === button.dataset.downloadDeviceBatchFile);
+        if (row) downloadDeviceBatchOpFile(row);
+      });
+    });
+    $$("[data-device-batch-detail]", body).forEach((button) => {
+      button.addEventListener("click", () => {
+        const row = deviceBatchOpLogs.find((item) => String(item.id) === button.dataset.deviceBatchDetail);
+        if (row) openDeviceBatchOpDetailModal(row);
+      });
+    });
+  };
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    logState.filters = Object.fromEntries(new FormData(form).entries());
+    logState.page = 1;
+    renderRows();
+  });
+  fragment.querySelector("#resetDeviceBatchOpLog").addEventListener("click", () => {
+    form.reset();
+    logState.filters = {};
+    logState.page = 1;
+    renderRows();
+  });
+  renderRows();
+  openModal(fragment);
+}
+
 function exportCardCancelOperationLog(rows) {
   if (!rows.length) {
     showToast("暂无可导出数据");
     return;
   }
-  const headers = ["ICCID", "批次号", "申请人", "客户名称", "状态", "失败原因", "申请时间", "审核时间", "执行时间", "审核人"];
+  const headers = ["ICCID", "批次号", "国家", "申请人", "客户名称", "状态", "失败原因", "申请时间", "审核时间", "执行时间", "审核人"];
   const dataRows = rows.map((row) => [
     row.iccid,
     row.batchNo,
+    row.country,
     row.operator,
     row.customerName,
     row.status,

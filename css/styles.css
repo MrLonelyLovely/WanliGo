@@ -613,7 +613,69 @@ button {
 .device-toolbar-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn.device-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.18) inset;
+}
+
+.btn.device-act .device-act-icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+}
+
+.btn.device-act-move {
+  background: #f59aaa;
+}
+
+.btn.device-act-move:hover {
+  background: #ed889a;
+}
+
+.btn.device-act-sms {
+  background: #5ecf9a;
+}
+
+.btn.device-act-sms:hover {
+  background: #4ec08c;
+}
+
+.btn.device-act-peach {
+  background: #ffb07a;
+}
+
+.btn.device-act-peach:hover {
+  background: #f5a268;
+}
+
+.btn.device-act-amber {
+  background: #f0b44c;
+}
+
+.btn.device-act-log {
+  background: #5bb8c9;
+}
+
+.btn.device-act-log:hover {
+  background: #4aa9bb;
+}
+
+.btn.device-act-amber:hover {
+  background: #e4a73d;
 }
 
 .device-iccid-link {
