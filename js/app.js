@@ -1311,57 +1311,18 @@ function applyCancelStatusToCards(iccids) {
 const retentionOperatorOptions = cardCancelOperatorOptions;
 const RETENTION_DETAIL_FAIL_RESULTS = ["受理失败", "执行失败"];
 
-function addCalendarYears(dateStr, years) {
-  const date = new Date(`${String(dateStr).slice(0, 10)}T00:00:00`);
-  date.setFullYear(date.getFullYear() + years);
-  return date;
-}
-
-function getRetentionLastSuccessAt(iccid) {
-  let latest = retentionLastSuccessAtByIccid[iccid] || null;
-  retentionLogs.forEach((batch) => {
-    (batch.details || []).forEach((detail) => {
-      if (detail.iccid !== iccid || detail.result !== "执行成功") return;
-      const at = (batch.effectiveAt || batch.applyAt || "").slice(0, 10);
-      if (at && (!latest || at > latest)) latest = at;
-    });
-  });
-  return latest;
-}
-
-function getRetentionEligibility(iccid, operator, at = new Date()) {
-  if (!isCardCancelCustomerOperator(operator)) return { ok: true };
-  const card = findManagedCard(iccid);
-  if (!card) return { ok: false, reason: "ICCID 不存在或未归属该客户" };
-  const lastSuccess = getRetentionLastSuccessAt(iccid);
-  const baseDate = lastSuccess || card.activatedAt;
-  if (!baseDate) return { ok: false, reason: "无法获取激活时间" };
-  const eligibleFrom = addCalendarYears(baseDate, 1);
-  const applyDay = new Date(at);
-  applyDay.setHours(0, 0, 0, 0);
-  if (applyDay < eligibleFrom) {
-    return {
-      ok: false,
-      reason: lastSuccess ? "自上次成功停机保号起未满一年" : "自激活起未满一年"
-    };
-  }
-  return { ok: true };
-}
-
 function getRetentionDetailFailReason(detail) {
   if (!RETENTION_DETAIL_FAIL_RESULTS.includes(detail.result)) return "--";
   return detail.failReason || "停机保号失败";
 }
 
-function getRetentionStatusBadgeClass(status) {
-  if (["执行成功", "待执行"].includes(status)) return "success";
-  if (["执行失败", "受理失败"].includes(status)) return "fail";
-  return "running";
-}
+const RETENTION_BATCH_STATUSES = ["待执行", "全部成功", "部份成功", "全部失败"];
 
-function getRetentionBatchFailReason(row) {
-  if (row.result === "执行失败") return row.batchFailReason || "部分卡片停机保号失败";
-  return "—";
+function getRetentionStatusBadgeClass(status) {
+  if (["全部成功", "执行成功", "待执行"].includes(status)) return "success";
+  if (["全部失败", "执行失败", "受理失败"].includes(status)) return "fail";
+  if (status === "部份成功") return "running";
+  return "running";
 }
 
 function syncRetentionBatchFromDetails(log) {
@@ -1374,24 +1335,34 @@ function syncRetentionBatchFromDetails(log) {
   log.failCount = acceptFailCount + executeFailCount;
   log.successCount = successCount + pendingCount;
   if (acceptFailCount === details.length) {
-    log.result = "执行失败";
+    log.result = "全部失败";
     log.batchFailReason = log.batchFailReason || details[0]?.failReason || "全部 ICCID 受理失败";
     log.effectiveAt = log.effectiveAt || "";
     return;
   }
-  if (executeFailCount > 0 || (successCount > 0 && successCount < details.length && pendingCount === 0)) {
-    log.result = "执行失败";
-    if (!log.batchFailReason) {
-      log.batchFailReason = executeFailCount < details.length ? "部分卡片停机保号失败" : (details.find((item) => item.result === "执行失败")?.failReason || "停机保号失败");
-    }
-    return;
-  }
-  if (pendingCount > 0) {
+  if (pendingCount > 0 && executeFailCount === 0) {
     log.result = "待执行";
     return;
   }
-  if (successCount === details.length) {
-    log.result = "执行成功";
+  if (successCount > 0 && executeFailCount > 0) {
+    log.result = "部份成功";
+    if (!log.batchFailReason) log.batchFailReason = "部分卡片停机保号失败";
+    return;
+  }
+  if (successCount > 0 && acceptFailCount > 0 && executeFailCount === 0) {
+    log.result = "部份成功";
+    if (!log.batchFailReason) log.batchFailReason = "部分 ICCID 受理失败";
+    return;
+  }
+  if (executeFailCount > 0) {
+    log.result = "全部失败";
+    if (!log.batchFailReason) {
+      log.batchFailReason = details.find((item) => item.result === "执行失败")?.failReason || "停机保号失败";
+    }
+    return;
+  }
+  if (successCount > 0) {
+    log.result = "全部成功";
   }
 }
 
@@ -1399,7 +1370,7 @@ function getRetentionCardEffectiveAt(batch, detail) {
   if (detail.result === "执行成功") return batch.effectiveAt || "—";
   if (detail.result === "待执行" || batch.result === "待执行") return batch.effectiveAt || "—";
   if (detail.result === "受理失败") return "—";
-  if (detail.result === "执行失败" || batch.result === "执行失败") return batch.effectiveAt || batch.applyAt || "—";
+  if (detail.result === "执行失败" || batch.result === "全部失败" || batch.result === "部份成功") return batch.effectiveAt || batch.applyAt || "—";
   return batch.effectiveAt || batch.applyAt || "—";
 }
 
@@ -1430,7 +1401,7 @@ function appendRetentionDeviceLogIfTerminal(detail, batch) {
       operator: batch.operator || "系统",
       action: "停机保号",
       content: "停机保号",
-      result: "操作成功"
+      result: "停机保号成功"
     });
     return;
   }
@@ -1441,7 +1412,7 @@ function appendRetentionDeviceLogIfTerminal(detail, batch) {
       operator: batch.operator || "系统",
       action: "停机保号",
       content: "停机保号",
-      result: "操作失败"
+      result: "停机保号失败"
     });
   }
 }
@@ -1457,7 +1428,7 @@ function buildRetentionDeviceOperationLogsFromBatches(batches) {
           operator: batch.operator || "系统",
           action: "停机保号",
           content: "停机保号",
-          result: "操作成功"
+          result: "停机保号成功"
         });
       } else if (detail.result === "执行失败" || detail.result === "受理失败") {
         rows.push({
@@ -1466,7 +1437,7 @@ function buildRetentionDeviceOperationLogsFromBatches(batches) {
           operator: batch.operator || "系统",
           action: "停机保号",
           content: "停机保号",
-          result: "操作失败"
+          result: "停机保号失败"
         });
       }
     });
@@ -1487,19 +1458,16 @@ function getCustomerNameForSessionOperator(operator) {
   return "";
 }
 
-function buildRetentionDetails(iccids, operator, applyAt) {
+function buildRetentionDetails(iccids) {
   return iccids.map((iccid) => {
-    const eligibility = getRetentionEligibility(iccid, operator, applyAt);
-    if (!eligibility.ok) {
-      return { iccid, result: "受理失败", failReason: eligibility.reason };
-    }
+    const card = findManagedCard(iccid);
+    if (!card) return { iccid, result: "受理失败", failReason: "ICCID 不存在或未归属该客户" };
     return { iccid, result: "待执行", failReason: "" };
   });
 }
 
 function executeApprovedCardCancel(log) {
-  const effectiveAt = getCancelEffectiveAt();
-  log.effectiveAt = effectiveAt;
+  if (!log.effectiveAt) log.effectiveAt = getCancelEffectiveAt();
   log.details.forEach((detail) => {
     if (detail.result === "执行失败") return;
     if (detail.market === "英国") {
@@ -1805,10 +1773,6 @@ cardCancelLogs.filter((log) => ["全部成功", "部份成功"].includes(log.res
   (log.details || []).filter((detail) => detail.result === "执行成功").map((detail) => detail.iccid)
 ));
 
-const retentionLastSuccessAtByIccid = {
-  "89860404112026062706": "2025-07-01"
-};
-
 const retentionLogs = [
   {
     id: 1,
@@ -1819,14 +1783,14 @@ const retentionLogs = [
     fileName: "wanli_retention_20261018.xlsx",
     iccids: [DEMO_DEVICE_ICCID, "89860404112026062409"],
     totalCount: 2,
-    successCount: 1,
-    failCount: 1,
+    successCount: 2,
+    failCount: 0,
     result: "待执行",
     applyAt: "2026-10-18 09:42:11",
     effectiveAt: "2026-11-01 00:00:00",
     batchFailReason: "",
     details: [
-      { iccid: DEMO_DEVICE_ICCID, result: "受理失败", failReason: "自激活起未满一年" },
+      { iccid: DEMO_DEVICE_ICCID, result: "待执行", failReason: "" },
       { iccid: "89860404112026062409", result: "待执行", failReason: "" }
     ]
   },
@@ -1858,11 +1822,28 @@ const retentionLogs = [
     totalCount: 1,
     successCount: 0,
     failCount: 1,
-    result: "执行失败",
+    result: "全部失败",
     applyAt: "2026-09-01 11:20:05",
-    effectiveAt: "",
+    effectiveAt: "2026-10-01 00:00:00",
     batchFailReason: "自上次成功停机保号起未满一年",
-    details: [{ iccid: "89860404112026062706", result: "受理失败", failReason: "自上次成功停机保号起未满一年" }]
+    details: [{ iccid: "89860404112026062706", result: "执行失败", failReason: "自上次成功停机保号起未满一年" }]
+  },
+  {
+    id: 4,
+    batchNo: "RT202608010004",
+    operator: "admin",
+    customerName: "Ingoo Holding Limited",
+    type: "批量",
+    fileName: "ingoo_retention_20260801.xlsx",
+    iccids: ["89860404112026063002"],
+    totalCount: 1,
+    successCount: 1,
+    failCount: 0,
+    result: "全部成功",
+    applyAt: "2026-07-05 10:15:22",
+    effectiveAt: "2026-08-01 00:00:00",
+    batchFailReason: "",
+    details: [{ iccid: "89860404112026063002", result: "执行成功", failReason: "" }]
   },
   {
     id: 5,
@@ -1871,23 +1852,24 @@ const retentionLogs = [
     customerName: "天翼物联",
     type: "批量",
     fileName: "tianyi_retention_partial_fail_20260720.xlsx",
-    iccids: ["89860404112026062805", "89444610503500051173"],
-    totalCount: 2,
+    iccids: ["89860404112026062711", "89860404112026062713", "89860404112026062714"],
+    totalCount: 3,
     successCount: 1,
-    failCount: 1,
-    result: "执行失败",
+    failCount: 2,
+    result: "部份成功",
     applyAt: "2026-07-20 16:40:18",
     effectiveAt: "2026-08-01 00:00:00",
     batchFailReason: "部分卡片停机保号失败",
     details: [
-      { iccid: "89860404112026062805", result: "执行成功", failReason: "" },
-      { iccid: "89444610503500051173", result: "执行失败", failReason: "平台接口异常，停机保号未生效" }
+      { iccid: "89860404112026062711", result: "受理失败", failReason: "ICCID 不存在或未归属该客户" },
+      { iccid: "89860404112026062713", result: "执行成功", failReason: "" },
+      { iccid: "89860404112026062714", result: "执行失败", failReason: "等待期间卡片已注销" }
     ]
   }
 ];
 
 retentionLogs.forEach((log) => syncRetentionBatchFromDetails(log));
-retentionLogs.filter((log) => log.result === "执行成功").forEach((log) => applyRetentionStatusToCards(
+retentionLogs.filter((log) => ["全部成功", "部份成功"].includes(log.result)).forEach((log) => applyRetentionStatusToCards(
   (log.details || []).filter((detail) => detail.result === "执行成功").map((detail) => detail.iccid)
 ));
 
@@ -2412,7 +2394,7 @@ function renderFilter() {
         ${fieldSelect("申请人", "operator", retentionOperatorOptions, filters.operator)}
         ${fieldInput("批次号", "batchNo", filters.batchNo)}
         ${hideCustomer ? "" : fieldDatalist("客户名称", "customerName", filters.customerName, customerOptions)}
-        ${fieldSelect("状态", "result", ["待执行", "执行成功", "执行失败"], filters.result)}
+        ${fieldSelect("状态", "result", RETENTION_BATCH_STATUSES, filters.result)}
         <label class="field">
           <span>申请时间</span>
           <div class="range-row">
@@ -2816,7 +2798,7 @@ function renderToolbar() {
     $("#approveCardCancelBtn").addEventListener("click", () => {
       const selectedRows = cardCancelLogs.filter((row) => row.result === "待审核" && state.selectedCardCancelAudits.has(row.id));
       if (!selectedRows.length) return;
-      confirmAction("确认通过", `是否确认通过 ${selectedRows.length} 条注销申请？审核通过后按卡类型执行注销，次月 1 日执行。`, () => {
+      confirmAction("确认通过", `是否确认通过 ${selectedRows.length} 条注销申请？审核通过后按卡类型执行注销，于各批次所选注销生效时间执行。`, () => {
         const auditAt = formatDateTime(new Date());
         selectedRows.forEach((row) => {
           row.auditAt = auditAt;
@@ -5633,7 +5615,7 @@ function getMockCancelIccids(customerName, country) {
     .slice(0, 3);
 }
 
-function createCardCancelBatch({ customerName, country, fileName, needAudit, operator, sourceFile, iccids }) {
+function createCardCancelBatch({ customerName, country, fileName, needAudit, operator, sourceFile, iccids, effectiveDate }) {
   const resolvedIccids = iccids?.length ? iccids : getMockCancelIccids(customerName, country);
   if (!resolvedIccids.length) return null;
   const now = new Date();
@@ -5655,7 +5637,7 @@ function createCardCancelBatch({ customerName, country, fileName, needAudit, ope
     applyAt: formatDateTime(now),
     auditAt: "",
     auditor: "",
-    effectiveAt: needAudit ? "" : getCancelEffectiveAt(now),
+    effectiveAt: effectiveDate ? `${effectiveDate} 00:00:00` : (needAudit ? "" : getCancelEffectiveAt(now)),
     rejectReason: "",
     needAudit,
     details: buildCancelDetails(resolvedIccids)
@@ -5760,7 +5742,7 @@ function renderCardCancelTable(rows) {
     button.addEventListener("click", () => {
       const row = cardCancelLogs.find((item) => String(item.id) === button.dataset.approveCardCancel);
       if (!row) return;
-      confirmAction("确认通过", "英国卡将调用 API 并同步英国平台；巴西卡进入待执行。次月 1 日执行后状态为 cancel。", () => {
+      confirmAction("确认通过", "英国卡将调用 API 并同步英国平台；巴西卡进入待执行。于所选注销生效时间执行后状态为 cancel。", () => {
         row.auditAt = formatDateTime(new Date());
         row.auditor = "李明";
         executeApprovedCardCancel(row);
@@ -5792,13 +5774,18 @@ function openCardCancelModal() {
   if (tip) {
     if (needAudit) {
       tip.hidden = false;
-      tip.textContent = "客户提交需管理员审核，审核通过后次月 1 日执行；执行后 ICCID 状态为 cancel，关联套餐失效。";
+      tip.textContent = "客户提交需管理员审核，审核通过后于所选注销生效时间执行；执行后 ICCID 状态为 cancel，关联套餐失效。";
     } else {
       tip.hidden = true;
       tip.textContent = "";
     }
   }
   if (submitBtn) submitBtn.textContent = needAudit ? "提交申请" : "确定注销";
+  const effectiveInput = form.elements.effectiveDate;
+  const tomorrow = new Date();
+  tomorrow.setHours(0, 0, 0, 0);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  if (effectiveInput) effectiveInput.min = formatDate(tomorrow);
   const customerSelect = form.elements.customerName;
   customerSelect.innerHTML = `
     <option value="">请选择</option>
@@ -5808,9 +5795,14 @@ function openCardCancelModal() {
     event.preventDefault();
     const customerName = form.elements.customerName.value;
     const country = form.elements.country.value;
+    const effectiveDate = form.elements.effectiveDate.value;
     const file = form.elements.batchFile.files[0];
-    if (!customerName || !country || !file) {
+    if (!customerName || !country || !effectiveDate || !file) {
       showToast("请完整填写注销信息");
+      return;
+    }
+    if (effectiveDate <= formatDate(new Date())) {
+      showToast("注销生效时间须晚于今天");
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
@@ -5832,7 +5824,8 @@ function openCardCancelModal() {
       needAudit,
       operator,
       sourceFile: file,
-      iccids: parsedIccids
+      iccids: parsedIccids,
+      effectiveDate
     });
     if (!log) {
       showToast(`该客户下没有可注销的${country}卡片`);
@@ -5840,7 +5833,7 @@ function openCardCancelModal() {
     }
     closeModal(form.closest(".modal"));
     render();
-    showToast(needAudit ? "注销申请已提交，待管理员审核" : "注销已受理，次月 1 日执行");
+    showToast(needAudit ? "注销申请已提交，待管理员审核" : `注销已受理，将于 ${effectiveDate} 执行`);
   });
   openModal(fragment);
 }
@@ -6000,7 +5993,7 @@ function createRetentionBatch({ customerName, fileName, operator, sourceFile }) 
   if (!iccids.length) return null;
   const now = new Date();
   const batchNo = `RT${formatDate(now).replaceAll("-", "")}${String(retentionLogs.length + 1).padStart(4, "0")}`;
-  const details = buildRetentionDetails(iccids, operator, now);
+  const details = buildRetentionDetails(iccids);
   const log = {
     id: retentionLogs.length ? Math.max(...retentionLogs.map((item) => item.id)) + 1 : 1,
     batchNo,
@@ -6034,18 +6027,17 @@ function createRetentionBatch({ customerName, fileName, operator, sourceFile }) 
 
 function renderRetentionTable(rows) {
   const hideCustomer = isCardCancelCustomerOperator(getCardCancelSessionOperator());
-  const colCount = hideCustomer ? 11 : 12;
+  const colCount = hideCustomer ? 10 : 11;
   $("#tableHead").innerHTML = `
     <tr>
       <th>批次号</th>
       <th>申请人</th>
       ${hideCustomer ? "" : "<th>客户名称</th>"}
       <th>申请文件</th>
+      <th>状态</th>
       <th>申请总数</th>
       <th>成功数</th>
       <th>失败数</th>
-      <th>状态</th>
-      <th>失败原因</th>
       <th>申请时间</th>
       <th>生效时间</th>
       <th>操作</th>
@@ -6057,11 +6049,10 @@ function renderRetentionTable(rows) {
       <td>${row.operator}</td>
       ${hideCustomer ? "" : `<td>${row.customerName}</td>`}
       <td class="content-cell" title="${escapeAttr(row.fileName)}"><button type="button" class="file-download-btn" data-download-retention-file="${row.id}">${row.fileName}</button></td>
+      <td><span class="status ${getRetentionStatusBadgeClass(row.result)}">${row.result}</span></td>
       <td>${row.totalCount}</td>
       <td>${row.successCount ?? 0}</td>
       <td>${row.failCount ?? 0}</td>
-      <td><span class="status ${getRetentionStatusBadgeClass(row.result)}">${row.result}</span></td>
-      <td class="content-cell" title="${escapeAttr(getRetentionBatchFailReason(row))}">${getRetentionBatchFailReason(row)}</td>
       <td>${row.applyAt}</td>
       <td>${row.effectiveAt || "—"}</td>
       <td>
@@ -6091,9 +6082,7 @@ function openRetentionModal() {
   const isCustomer = isCardCancelCustomerOperator(operator);
   const fragment = $("#retentionModalTemplate").content.cloneNode(true);
   const form = fragment.querySelector("#retentionForm");
-  const tip = fragment.querySelector("#retentionModalTip");
   const customerField = fragment.querySelector("#retentionCustomerField");
-  if (tip) tip.hidden = false;
   if (isCustomer && customerField) customerField.hidden = true;
   const customerSelect = form.elements.customerName;
   if (!isCustomer) {
@@ -6160,7 +6149,7 @@ function openRetentionDetailModal(row) {
     <div class="iccid-lookup-item"><span>批次号</span><strong>${row.batchNo}</strong></div>
     <div class="iccid-lookup-item"><span>客户名称</span><strong>${row.customerName}</strong></div>
     <div class="iccid-lookup-item"><span>状态</span><strong>${row.result}</strong></div>
-    <div class="iccid-lookup-item"><span>生效时间</span><strong>${row.effectiveAt || "—"}</strong></div>
+    <div class="iccid-lookup-item"><span>申请时间</span><strong>${row.applyAt || "—"}</strong></div>
   `;
   fragment.querySelector("#retentionDetailBody").innerHTML = row.details.length ? row.details.map((detail) => {
     const failReason = getRetentionDetailFailReason(detail);
@@ -7551,6 +7540,7 @@ function openPackageQuoteForm() {
   fillSelect(form.elements.cardCurrency, quoteCurrencies, "请选择");
   fillSelect(form.elements.serviceCurrency, quoteCurrencies, "请选择");
   fillSelect(form.elements.packagePriceCurrency, quoteCurrencies, "币种");
+  fillSelect(form.elements.idleFeeCurrency, quoteCurrencies, "币种");
   fillSelect(form.elements.packageTotalUnit, dataPoolCapacityUnits, "单位");
   fillSelect(form.elements.roamingConfig, roamingConfigs.map((item) => item.name), "请选择");
 
@@ -7716,6 +7706,7 @@ function openPackageQuoteForm() {
       addedAt,
       remark: form.elements.remark.value.trim(),
       idleFee: form.elements.idleFee.value.trim(),
+      idleFeeCurrency: form.elements.idleFeeCurrency.value,
       quoteCopy: form.elements.quoteCopy.value.trim(),
       serviceCurrency: form.elements.serviceCurrency.value,
       packagePrice: form.elements.packagePrice.value.trim(),

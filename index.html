@@ -117,11 +117,11 @@
                 <span class="prototype-doc-count">(1 份文档)</span>
               </button>
               <div class="prototype-doc-list">
-                <a class="prototype-doc-item" href="./卡片注销_PRD.pdf?v=20261023-1105" target="_blank" rel="noopener">
+                <a class="prototype-doc-item" href="./卡片注销_PRD_V1.2.pdf?v=20261028-1525" target="_blank" rel="noopener">
                   <span class="prototype-doc-icon">PDF</span>
                   <span class="prototype-doc-text">
-                    <span class="prototype-doc-name">卡片注销_PRD</span>
-                    <span class="prototype-doc-meta">2026-10-23 11:05:04 更新 · Patrick</span>
+                    <span class="prototype-doc-name">卡片注销_PRD_V1.2</span>
+                    <span class="prototype-doc-meta">2026-10-28 15:25:15 更新 · V1.2 · Patrick</span>
                   </span>
                   <span class="prototype-doc-open">↗</span>
                 </a>
@@ -1297,7 +1297,12 @@
           </label>
           <label class="field" data-field="idleFee">
             <span>停机保号</span>
-            <input type="text" name="idleFee" placeholder="请输入停机保号费">
+            <div class="input-addon">
+              <input type="text" name="idleFee" placeholder="请输入停机保号费">
+              <select name="idleFeeCurrency">
+                <option value="">币种</option>
+              </select>
+            </div>
           </label>
         </div>
         <div class="quote-region-block" data-field="regions" hidden>
@@ -1512,7 +1517,7 @@
     <div class="modal modal-lg">
       <button class="modal-close" data-close-modal>×</button>
       <h2>注销</h2>
-      <p class="upload-tip" id="cardCancelModalTip">客户提交需管理员审核，审核通过后次月 1 日执行；执行后 ICCID 状态为 cancel，关联套餐失效。</p>
+      <p class="upload-tip" id="cardCancelModalTip">客户提交需管理员审核，审核通过后于所选注销生效时间执行；执行后 ICCID 状态为 cancel，关联套餐失效。</p>
       <form id="cardCancelForm" class="form-stack">
         <label class="field">
           <span>客户名称</span>
@@ -1527,6 +1532,12 @@
             <option value="英国">英国</option>
             <option value="巴西">巴西</option>
           </select>
+        </label>
+        <label class="field">
+          <span>注销生效时间</span>
+          <span class="date-full-hit-wrap">
+            <input type="date" name="effectiveDate" class="date-full-hit" required>
+          </span>
         </label>
         <div class="field">
           <span>上传文件</span>
@@ -1615,7 +1626,6 @@
     <div class="modal modal-lg">
       <button class="modal-close" data-close-modal>×</button>
       <h2>停机保号</h2>
-      <p class="upload-tip" id="retentionModalTip" hidden>当月仍可使用套餐并正常计费；次月 1 日生效后状态为 retention，仅收取停机保号费。客户侧须满足一年限制（见需求文档）。</p>
       <form id="retentionForm" class="form-stack">
         <label class="field" id="retentionCustomerField">
           <span>客户名称</span>
@@ -1670,7 +1680,7 @@
         <label class="field"><span>ICCID</span><input type="text" name="iccid" placeholder="请输入ICCID"></label>
         <label class="field"><span>客户名称</span><input type="text" name="customerName" list="retentionLogCustomerOptions" placeholder="请选择"><datalist id="retentionLogCustomerOptions"></datalist></label>
         <label class="field"><span>申请时间</span><div class="range-row"><input type="date" name="startDate"><input type="date" name="endDate"></div></label>
-        <label class="field"><span>状态</span><select name="status"><option value="">请选择</option><option value="待执行">待执行</option><option value="执行成功">执行成功</option><option value="执行失败">执行失败</option><option value="受理失败">受理失败</option></select></label>
+        <label class="field"><span>状态</span><select name="status"><option value="">请选择</option><option value="待执行">待执行</option><option value="执行成功">执行成功</option><option value="执行失败">执行失败</option></select></label>
         <div class="filter-actions"><button type="submit" class="btn primary">搜索</button><button type="button" class="btn ghost" id="resetRetentionLog">重置</button><button type="button" class="btn orange" id="exportRetentionLog">导出</button></div>
       </form>
       <div class="table-wrap compact">
