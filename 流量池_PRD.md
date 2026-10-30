@@ -360,7 +360,7 @@
 
 > <span style="color:blue;font-weight:bold;">此处续订的是预购池的合约时长和池容量。共享池没有池到期时间，不展示续订。</span>
 
-<img src="./流量池_PRD.assets/CleanShot 2026-10-09 at 15.20.58@2x.png" alt="CleanShot 2026-10-09 at 15.20.58@2x" style="zoom:50%;" />
+<img src="./流量池_PRD.assets/CleanShot 2026-10-09 at 15.20.58@2x.png" alt="CleanShot 2026-10-09 at 15.20.58@2x" style="width:50%;" align="left"/>
 
 ### 4.7.1 续订说明
 
