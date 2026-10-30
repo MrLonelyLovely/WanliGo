@@ -6414,6 +6414,9 @@ function openPrototypeDocsModal() {
     });
   });
   openModal(fragment);
+  const layer = $("#modalLayer");
+  layer.classList.add("is-prototype-docs-layer");
+  document.body.classList.add("is-prototype-docs-open");
 }
 
 function openSmsUrlConfigModal() {
@@ -8106,8 +8109,9 @@ function closeModal(source) {
   if (modal) modal.remove();
   const layer = $("#modalLayer");
   if (!layer.querySelector(".modal")) {
-    layer.classList.remove("show");
+    layer.classList.remove("show", "is-prototype-docs-layer");
     layer.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("is-prototype-docs-open");
   }
 }
 
