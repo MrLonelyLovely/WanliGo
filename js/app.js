@@ -1309,7 +1309,7 @@ function applyCancelStatusToCards(iccids) {
 }
 
 const retentionOperatorOptions = cardCancelOperatorOptions;
-const RETENTION_DETAIL_FAIL_RESULTS = ["受理失败", "执行失败"];
+const RETENTION_DETAIL_FAIL_RESULTS = ["执行失败"];
 
 function getRetentionDetailFailReason(detail) {
   if (!RETENTION_DETAIL_FAIL_RESULTS.includes(detail.result)) return "--";
@@ -1320,7 +1320,7 @@ const RETENTION_BATCH_STATUSES = ["待执行", "全部成功", "部份成功", "
 
 function getRetentionStatusBadgeClass(status) {
   if (["全部成功", "执行成功", "待执行"].includes(status)) return "success";
-  if (["全部失败", "执行失败", "受理失败"].includes(status)) return "fail";
+  if (["全部失败", "执行失败"].includes(status)) return "fail";
   if (status === "部份成功") return "running";
   return "running";
 }
@@ -1328,30 +1328,29 @@ function getRetentionStatusBadgeClass(status) {
 function syncRetentionBatchFromDetails(log) {
   const details = log.details || [];
   if (!details.length) return;
-  const acceptFailCount = details.filter((item) => item.result === "受理失败").length;
+  details.forEach((item) => {
+    if (item.result === "受理失败") item.result = "执行失败";
+  });
   const executeFailCount = details.filter((item) => item.result === "执行失败").length;
   const pendingCount = details.filter((item) => item.result === "待执行").length;
   const successCount = details.filter((item) => item.result === "执行成功").length;
-  log.failCount = acceptFailCount + executeFailCount;
-  log.successCount = successCount + pendingCount;
-  if (acceptFailCount === details.length) {
+  log.failCount = executeFailCount;
+  log.successCount = successCount;
+  if (executeFailCount === details.length) {
     log.result = "全部失败";
-    log.batchFailReason = log.batchFailReason || details[0]?.failReason || "全部 ICCID 受理失败";
+    log.batchFailReason = log.batchFailReason || details[0]?.failReason || "停机保号失败";
     log.effectiveAt = log.effectiveAt || "";
     return;
   }
   if (pendingCount > 0 && executeFailCount === 0) {
     log.result = "待执行";
+    log.successCount = 0;
+    log.effectiveAt = "";
     return;
   }
   if (successCount > 0 && executeFailCount > 0) {
     log.result = "部份成功";
     if (!log.batchFailReason) log.batchFailReason = "部分卡片停机保号失败";
-    return;
-  }
-  if (successCount > 0 && acceptFailCount > 0 && executeFailCount === 0) {
-    log.result = "部份成功";
-    if (!log.batchFailReason) log.batchFailReason = "部分 ICCID 受理失败";
     return;
   }
   if (executeFailCount > 0) {
@@ -1366,10 +1365,20 @@ function syncRetentionBatchFromDetails(log) {
   }
 }
 
+/** 列表「成功数」：批次待执行时恒为 0（尚未执行成功） */
+function getRetentionBatchSuccessCount(log) {
+  if (log.result === "待执行") return 0;
+  return log.successCount ?? 0;
+}
+
+function getRetentionBatchEffectiveAtDisplay(log) {
+  if (log.result === "待执行") return "--";
+  return log.effectiveAt || "—";
+}
+
 function getRetentionCardEffectiveAt(batch, detail) {
   if (detail.result === "执行成功") return batch.effectiveAt || "—";
   if (detail.result === "待执行" || batch.result === "待执行") return batch.effectiveAt || "—";
-  if (detail.result === "受理失败") return "—";
   if (detail.result === "执行失败" || batch.result === "全部失败" || batch.result === "部份成功") return batch.effectiveAt || batch.applyAt || "—";
   return batch.effectiveAt || batch.applyAt || "—";
 }
@@ -1393,27 +1402,45 @@ function flattenRetentionOperationLogs() {
   return rows.sort((a, b) => `${b.effectiveAt}${b.applyAt}`.localeCompare(`${a.effectiveAt}${a.applyAt}`));
 }
 
+function getRetentionDeviceOperationAction(iccid) {
+  return iccid === "89860404112026062706" ? "retention" : "停机保号";
+}
+
+/** 设备管理 - 操作日志：单卡停机保号/retention 展示终态（原型演示） */
+function finalizeRetentionDeviceOperationLogRow(row) {
+  if (row.iccid === "89860404112026062706") {
+    return {
+      ...row,
+      action: "retention",
+      content: "合约到期自动停机保号",
+      operator: "admin",
+      result: "停机保号成功"
+    };
+  }
+  return row;
+}
+
 function appendRetentionDeviceLogIfTerminal(detail, batch) {
   if (detail.result === "执行成功") {
-    appendDeviceOperationLog({
+    appendDeviceOperationLog(finalizeRetentionDeviceOperationLogRow({
       iccid: detail.iccid,
       operatedAt: batch.effectiveAt || batch.applyAt,
       operator: batch.operator || "系统",
-      action: "停机保号",
+      action: getRetentionDeviceOperationAction(detail.iccid),
       content: "停机保号",
       result: "停机保号成功"
-    });
+    }));
     return;
   }
-  if (detail.result === "执行失败" || detail.result === "受理失败") {
-    appendDeviceOperationLog({
+  if (detail.result === "执行失败") {
+    appendDeviceOperationLog(finalizeRetentionDeviceOperationLogRow({
       iccid: detail.iccid,
-      operatedAt: detail.result === "受理失败" ? batch.applyAt : (batch.effectiveAt || batch.applyAt),
+      operatedAt: batch.effectiveAt || batch.applyAt,
       operator: batch.operator || "系统",
-      action: "停机保号",
+      action: getRetentionDeviceOperationAction(detail.iccid),
       content: "停机保号",
       result: "停机保号失败"
-    });
+    }));
   }
 }
 
@@ -1422,23 +1449,23 @@ function buildRetentionDeviceOperationLogsFromBatches(batches) {
   batches.forEach((batch) => {
     (batch.details || []).forEach((detail) => {
       if (detail.result === "执行成功") {
-        rows.push({
+        rows.push(finalizeRetentionDeviceOperationLogRow({
           iccid: detail.iccid,
           operatedAt: batch.effectiveAt || batch.applyAt,
           operator: batch.operator || "系统",
-          action: "停机保号",
+          action: getRetentionDeviceOperationAction(detail.iccid),
           content: "停机保号",
           result: "停机保号成功"
-        });
-      } else if (detail.result === "执行失败" || detail.result === "受理失败") {
-        rows.push({
+        }));
+      } else if (detail.result === "执行失败") {
+        rows.push(finalizeRetentionDeviceOperationLogRow({
           iccid: detail.iccid,
-          operatedAt: detail.result === "受理失败" ? batch.applyAt : (batch.effectiveAt || batch.applyAt),
+          operatedAt: batch.effectiveAt || batch.applyAt,
           operator: batch.operator || "系统",
-          action: "停机保号",
+          action: getRetentionDeviceOperationAction(detail.iccid),
           content: "停机保号",
           result: "停机保号失败"
-        });
+        }));
       }
     });
   });
@@ -1461,7 +1488,7 @@ function getCustomerNameForSessionOperator(operator) {
 function buildRetentionDetails(iccids) {
   return iccids.map((iccid) => {
     const card = findManagedCard(iccid);
-    if (!card) return { iccid, result: "受理失败", failReason: "ICCID 不存在或未归属该客户" };
+    if (!card) return { iccid, result: "执行失败", failReason: "ICCID 不存在或未归属该客户" };
     return { iccid, result: "待执行", failReason: "" };
   });
 }
@@ -1787,7 +1814,7 @@ const retentionLogs = [
     failCount: 0,
     result: "待执行",
     applyAt: "2026-10-18 09:42:11",
-    effectiveAt: "2026-11-01 00:00:00",
+    effectiveAt: "",
     batchFailReason: "",
     details: [
       { iccid: DEMO_DEVICE_ICCID, result: "待执行", failReason: "" },
@@ -1807,7 +1834,7 @@ const retentionLogs = [
     failCount: 0,
     result: "待执行",
     applyAt: "2026-10-12 14:08:33",
-    effectiveAt: "2026-11-01 00:00:00",
+    effectiveAt: "",
     batchFailReason: "",
     details: [{ iccid: "89860404112026063001", result: "待执行", failReason: "" }]
   },
@@ -1861,9 +1888,87 @@ const retentionLogs = [
     effectiveAt: "2026-08-01 00:00:00",
     batchFailReason: "部分卡片停机保号失败",
     details: [
-      { iccid: "89860404112026062711", result: "受理失败", failReason: "ICCID 不存在或未归属该客户" },
+      { iccid: "89860404112026062711", result: "执行失败", failReason: "ICCID 不存在或未归属该客户" },
       { iccid: "89860404112026062713", result: "执行成功", failReason: "" },
       { iccid: "89860404112026062714", result: "执行失败", failReason: "等待期间卡片已注销" }
+    ]
+  },
+  {
+    id: 6,
+    batchNo: "RT202610220006",
+    operator: "admin",
+    customerName: "万利通信技术（深圳）有限公司",
+    type: "批量",
+    fileName: "wanli_retention_fail_reasons_admin_20261022.xlsx",
+    iccids: [
+      "8986040411202606240",
+      "89860404112026063001",
+      "89860404112026062607",
+      "89860404112026062607",
+      "89860404112026062805",
+      "89860404112026063002",
+      "89860404112026062508",
+      "89860404112026062112",
+      "89860404112026062409",
+      DEMO_DEVICE_ICCID
+    ],
+    totalCount: 10,
+    successCount: 5,
+    failCount: 5,
+    result: "部份成功",
+    applyAt: "2026-10-22 11:05:18",
+    effectiveAt: "2026-11-01 00:00:00",
+    batchFailReason: "部分卡片停机保号失败",
+    details: [
+      { iccid: "8986040411202606240", result: "执行失败", failReason: "ICCID 格式不正确" },
+      { iccid: "89860404112026063001", result: "执行失败", failReason: "ICCID 不属于本次提交的客户" },
+      { iccid: "89860404112026062607", result: "执行成功", failReason: "" },
+      { iccid: "89860404112026062607", result: "执行失败", failReason: "同一文件里 ICCID 重复" },
+      { iccid: "89860404112026062805", result: "执行失败", failReason: "该卡当前状态已是 cancel" },
+      { iccid: "89860404112026063002", result: "执行失败", failReason: "该卡当前状态已是 retention" },
+      { iccid: "89860404112026062508", result: "执行成功", failReason: "" },
+      { iccid: "89860404112026062112", result: "执行成功", failReason: "" },
+      { iccid: "89860404112026062409", result: "执行成功", failReason: "" },
+      { iccid: DEMO_DEVICE_ICCID, result: "执行成功", failReason: "" }
+    ]
+  },
+  {
+    id: 7,
+    batchNo: "RT202610250007",
+    operator: "客户-王利",
+    customerName: "万利通信技术（深圳）有限公司",
+    type: "批量",
+    fileName: "wanli_retention_fail_reasons_customer_20261025.xlsx",
+    iccids: [
+      "8986040411202606240X",
+      "89860404112026061234",
+      "89860404112026063001",
+      "89860404112026062508",
+      "89860404112026062508",
+      "89860404112026062805",
+      "89860404112026063002",
+      "89860404112026062607",
+      "89860404112026062112",
+      DEMO_DEVICE_ICCID
+    ],
+    totalCount: 10,
+    successCount: 3,
+    failCount: 7,
+    result: "部份成功",
+    applyAt: "2026-10-25 15:28:44",
+    effectiveAt: "2026-11-01 00:00:00",
+    batchFailReason: "部分卡片停机保号失败",
+    details: [
+      { iccid: "8986040411202606240X", result: "执行失败", failReason: "ICCID 格式不正确" },
+      { iccid: "89860404112026061234", result: "执行失败", failReason: "ICCID 不属于当前帐号" },
+      { iccid: "89860404112026063001", result: "执行失败", failReason: "ICCID 不属于当前客户" },
+      { iccid: "89860404112026062508", result: "执行成功", failReason: "" },
+      { iccid: "89860404112026062508", result: "执行失败", failReason: "同一文件里 ICCID 重复" },
+      { iccid: "89860404112026062805", result: "执行失败", failReason: "该卡当前状态已是 cancel" },
+      { iccid: "89860404112026063002", result: "执行失败", failReason: "该卡当前状态已是 retention" },
+      { iccid: "89860404112026062607", result: "执行失败", failReason: "不满足时间限制" },
+      { iccid: "89860404112026062112", result: "执行成功", failReason: "" },
+      { iccid: DEMO_DEVICE_ICCID, result: "执行成功", failReason: "" }
     ]
   }
 ];
@@ -1891,8 +1996,17 @@ const deviceOperationLogs = [
     action: "cancel",
     content: "卡片注销",
     result: "注销成功"
+  },
+  {
+    iccid: "89860404112026062409",
+    operatedAt: "2026-10-18 10:12:08",
+    operator: "客户A",
+    action: "retention",
+    content: "主动申请停机保号",
+    result: "停机保号失败"
   }
 ]
+  .map((row) => finalizeRetentionDeviceOperationLogRow(row))
   .sort((a, b) => `${b.operatedAt}`.localeCompare(`${a.operatedAt}`))
   .map((row) => ({ id: getDeviceOperationActionId(row.action), ...row }));
 
@@ -2005,7 +2119,7 @@ const monthlyBills = [
 ];
 
 const state = {
-  module: "dataPool",
+  module: "retention",
   page: 1,
   pageSize: 10,
   filters: {
@@ -2181,6 +2295,13 @@ function bindGlobalEvents() {
 
   $("#refreshBtn").addEventListener("click", render);
   $("#prototypeDocsBtn").addEventListener("click", openPrototypeDocsModal);
+  $("#modalLayer").addEventListener("click", (event) => {
+    const layer = event.currentTarget;
+    if (!layer.classList.contains("is-prototype-docs-layer")) return;
+    if (event.target.closest(".prototype-docs-modal")) return;
+    const modal = layer.querySelector(".prototype-docs-modal");
+    if (modal) closeModal(modal);
+  });
   $(".menu-toggle").addEventListener("click", () => {
     state.sidebarCollapsed = !state.sidebarCollapsed;
     localStorage.setItem("sidebarCollapsed", String(state.sidebarCollapsed));
@@ -6012,13 +6133,14 @@ function createRetentionBatch({ customerName, fileName, operator, sourceFile }) 
     batchFailReason: "",
     details
   };
-  const allAcceptFailed = details.every((item) => item.result === "受理失败");
-  if (allAcceptFailed) {
+  const allExecuteFailed = details.every((item) => item.result === "执行失败");
+  if (allExecuteFailed) {
     log.effectiveAt = "";
     syncRetentionBatchFromDetails(log);
   } else {
     log.effectiveAt = getCancelEffectiveAt(now);
     syncRetentionBatchFromDetails(log);
+    if (log.result === "待执行") log.effectiveAt = "";
   }
   retentionLogs.unshift(log);
   details.forEach((detail) => appendRetentionDeviceLogIfTerminal(detail, log));
@@ -6051,10 +6173,10 @@ function renderRetentionTable(rows) {
       <td class="content-cell" title="${escapeAttr(row.fileName)}"><button type="button" class="file-download-btn" data-download-retention-file="${row.id}">${row.fileName}</button></td>
       <td><span class="status ${getRetentionStatusBadgeClass(row.result)}">${row.result}</span></td>
       <td>${row.totalCount}</td>
-      <td>${row.successCount ?? 0}</td>
+      <td>${getRetentionBatchSuccessCount(row)}</td>
       <td>${row.failCount ?? 0}</td>
       <td>${row.applyAt}</td>
-      <td>${row.effectiveAt || "—"}</td>
+      <td>${getRetentionBatchEffectiveAtDisplay(row)}</td>
       <td>
         <div class="op-group">
           <button type="button" class="op-btn" data-retention-detail="${row.id}">明细</button>
@@ -6094,6 +6216,7 @@ function openRetentionModal() {
   } else {
     customerSelect.required = false;
   }
+  fragment.querySelector("#downloadRetentionTemplate").addEventListener("click", downloadRetentionTemplate);
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     const customerName = isCustomer ? getCustomerNameForSessionOperator(operator) : form.elements.customerName.value;
@@ -6114,10 +6237,10 @@ function openRetentionModal() {
     }
     closeModal(form.closest(".modal"));
     render();
-    const hasAcceptFail = (log.details || []).some((item) => item.result === "受理失败");
-    const allAcceptFail = (log.details || []).every((item) => item.result === "受理失败");
-    if (allAcceptFail) showToast("全部 ICCID 受理失败");
-    else if (hasAcceptFail) showToast("已受理，部分 ICCID 受理失败，其余次月 1 日生效");
+    const hasExecuteFail = (log.details || []).some((item) => item.result === "执行失败");
+    const allExecuteFail = (log.details || []).every((item) => item.result === "执行失败");
+    if (allExecuteFail) showToast("全部 ICCID 执行失败");
+    else if (hasExecuteFail) showToast("部分 ICCID 执行失败，其余次月 1 日生效");
     else showToast("已受理，次月 1 日生效");
   });
   openModal(fragment);
@@ -6143,24 +6266,85 @@ function exportRetentionDetail(row) {
   showToast("导出成功");
 }
 
+function renderRetentionModalPagination(pagination, pageState, totalRows, onRefresh, options = {}) {
+  const pageDataKey = options.pageDataKey || "retentionModalPage";
+  const idPrefix = options.idPrefix || "retentionModal";
+  const pageDataAttr = `data-${pageDataKey}`;
+  const totalPages = Math.max(1, Math.ceil(totalRows / pageState.pageSize));
+  pageState.page = Math.min(pageState.page, totalPages);
+  const pageOptions = [10, 20, 50, 100]
+    .map((size) => `<option value="${size}" ${size === pageState.pageSize ? "selected" : ""}>${size}条/页</option>`)
+    .join("");
+  const pageButtons = totalPages <= 9
+    ? Array.from({ length: totalPages }, (_, index) => index + 1)
+      .map((page) => `<button type="button" class="page-btn ${page === pageState.page ? "active" : ""}" ${pageDataAttr}="${page}">${page}</button>`)
+      .join("")
+    : `<span class="pagination-summary">第 ${pageState.page} / ${totalPages} 页</span>`;
+  pagination.innerHTML = `
+    <span>共 ${totalRows} 条</span>
+    <select id="${idPrefix}PageSize">${pageOptions}</select>
+    <button type="button" class="page-btn" ${pageDataAttr}="${Math.max(1, pageState.page - 1)}" ${pageState.page <= 1 ? "disabled" : ""}>‹</button>
+    ${pageButtons}
+    <button type="button" class="page-btn" ${pageDataAttr}="${Math.min(totalPages, pageState.page + 1)}" ${pageState.page >= totalPages ? "disabled" : ""}>›</button>
+    <span>前往</span>
+    <input id="${idPrefix}GotoPage" type="number" min="1" max="${totalPages}" value="${pageState.page}">
+    <span>页</span>
+  `;
+  pagination.querySelector(`#${idPrefix}PageSize`).addEventListener("change", (event) => {
+    pageState.pageSize = Number(event.target.value);
+    pageState.page = 1;
+    onRefresh();
+  });
+  pagination.querySelectorAll(`[${pageDataAttr}]`).forEach((button) => {
+    button.addEventListener("click", () => {
+      if (button.disabled) return;
+      pageState.page = Number(button.getAttribute(pageDataAttr));
+      onRefresh();
+    });
+  });
+  pagination.querySelector(`#${idPrefix}GotoPage`).addEventListener("change", (event) => {
+    pageState.page = Math.min(totalPages, Math.max(1, Number(event.target.value || 1)));
+    onRefresh();
+  });
+}
+
 function openRetentionDetailModal(row) {
   const fragment = $("#retentionDetailModalTemplate").content.cloneNode(true);
+  const body = fragment.querySelector("#retentionDetailBody");
+  const pagination = fragment.querySelector("#retentionDetailPagination");
+  const details = row.details || [];
+  const detailState = { page: 1, pageSize: 10 };
+
   fragment.querySelector("#retentionDetailSummary").innerHTML = `
     <div class="iccid-lookup-item"><span>批次号</span><strong>${row.batchNo}</strong></div>
     <div class="iccid-lookup-item"><span>客户名称</span><strong>${row.customerName}</strong></div>
     <div class="iccid-lookup-item"><span>状态</span><strong>${row.result}</strong></div>
     <div class="iccid-lookup-item"><span>申请时间</span><strong>${row.applyAt || "—"}</strong></div>
+    <div class="iccid-lookup-item"><span>申请总数</span><strong>${row.totalCount ?? details.length}</strong></div>
   `;
-  fragment.querySelector("#retentionDetailBody").innerHTML = row.details.length ? row.details.map((detail) => {
-    const failReason = getRetentionDetailFailReason(detail);
-    return `
-    <tr>
-      <td>${detail.iccid}</td>
-      <td>${detail.result}</td>
-      <td class="content-cell" title="${escapeAttr(failReason)}">${failReason}</td>
-    </tr>
-  `;
-  }).join("") : emptyRow(3);
+
+  const renderDetailTable = () => {
+    const totalPages = Math.max(1, Math.ceil(details.length / detailState.pageSize));
+    detailState.page = Math.min(detailState.page, totalPages);
+    const start = (detailState.page - 1) * detailState.pageSize;
+    const pageRows = details.slice(start, start + detailState.pageSize);
+    body.innerHTML = pageRows.length ? pageRows.map((detail) => {
+      const failReason = getRetentionDetailFailReason(detail);
+      return `
+      <tr>
+        <td>${detail.iccid}</td>
+        <td>${detail.result}</td>
+        <td class="content-cell" title="${escapeAttr(failReason)}">${failReason}</td>
+      </tr>
+    `;
+    }).join("") : emptyRow(3);
+    renderRetentionModalPagination(pagination, detailState, details.length, renderDetailTable, {
+      pageDataKey: "retention-detail-page",
+      idPrefix: "retentionDetail"
+    });
+  };
+
+  renderDetailTable();
   fragment.querySelector("#retentionDetailExport").addEventListener("click", () => exportRetentionDetail(row));
   openModal(fragment);
 }
@@ -6205,15 +6389,9 @@ function openRetentionLogModal() {
         <td>${row.effectiveAt}</td>
       </tr>
     `).join("") : `<tr><td colspan="8">暂无数据</td></tr>`;
-    pagination.innerHTML = `
-      <span>共 ${rows.length} 条</span>
-      ${Array.from({ length: totalPages }, (_, index) => `<button type="button" class="page-btn ${index + 1 === logState.page ? "active" : ""}" data-retention-log-page="${index + 1}">${index + 1}</button>`).join("")}
-    `;
-    $$("[data-retention-log-page]", pagination).forEach((button) => {
-      button.addEventListener("click", () => {
-        logState.page = Number(button.dataset.retentionLogPage);
-        renderRows();
-      });
+    renderRetentionModalPagination(pagination, logState, rows.length, renderRows, {
+      pageDataKey: "retention-log-page",
+      idPrefix: "retentionLog"
     });
   };
 
@@ -6394,9 +6572,19 @@ function emptyRow(colspan) {
   return `<tr><td class="empty-row" colspan="${colspan}">暂无数据</td></tr>`;
 }
 
+function syncPrototypeDocNavCounts(modal) {
+  modal.querySelectorAll("[data-doc-status]").forEach((button) => {
+    const panelKey = button.dataset.docStatus;
+    const groupCount = modal.querySelectorAll(`[data-doc-panel="${panelKey}"] [data-doc-group]`).length;
+    const countEl = button.querySelector(".prototype-doc-nav-count");
+    if (countEl) countEl.textContent = String(groupCount);
+  });
+}
+
 function openPrototypeDocsModal() {
   const fragment = $("#prototypeDocsModalTemplate").content.cloneNode(true);
   const modal = fragment.querySelector(".prototype-docs-modal");
+  syncPrototypeDocNavCounts(modal);
   modal.querySelectorAll("[data-doc-status]").forEach((button) => {
     button.addEventListener("click", () => {
       const key = button.dataset.docStatus;
@@ -8156,6 +8344,16 @@ function downloadPackageModifyTemplate() {
     </table>
   `;
   downloadBlob(html, "套餐批量修改模版.xls", "application/vnd.ms-excel;charset=utf-8");
+}
+
+function downloadRetentionTemplate() {
+  const html = `
+    <table>
+      <tr><th>ICCID</th></tr>
+      <tr><td>89860404112026062409</td></tr>
+    </table>
+  `;
+  downloadBlob(html, "停机保号批量模版.xls", "application/vnd.ms-excel;charset=utf-8");
 }
 
 function downloadPackageModifyFile(fileName) {
