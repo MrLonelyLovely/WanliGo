@@ -1,0 +1,77 @@
+<mxfile host="Electron">
+  <diagram id="monthly-fixed-status-flow" name="状态流转">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="note" parent="1" style="text;html=1;fontSize=13;align=left;" value="卡片状态统一为 suspend；不新增状态值。区分靠 suspendSource（命名由开发决定）。" vertex="1">
+          <mxGeometry height="40" width="520" x="80" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="s1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fillColor=#d5e8d4;strokeColor=#82b366;" value="active" vertex="1">
+          <mxGeometry height="60" width="160" x="80" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="s2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fillColor=#f8cecc;strokeColor=#b85450;" value="suspend&#xa;（状态统一）" vertex="1">
+          <mxGeometry height="70" width="180" x="480" y="195" as="geometry" />
+        </mxCell>
+        <mxCell id="s3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;fillColor=#f5f5f5;strokeColor=#666666;" value="保持 suspend&#xa;pool_manual&#xa;不收池卡月费 / 停机保号费&#xa;不自动复机" vertex="1">
+          <mxGeometry height="90" width="220" x="900" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="s4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;fillColor=#fff2cc;strokeColor=#d6b656;dashed=1;" value="批量复机失败&#xa;quota / manual&#xa;「该卡当前无需复机」" vertex="1">
+          <mxGeometry height="80" width="200" x="900" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="src-q" parent="1" style="text;html=1;fontSize=12;align=center;" value="suspendSource = quota" vertex="1">
+          <mxGeometry height="30" width="160" x="300" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="src-m" parent="1" style="text;html=1;fontSize=12;align=center;" value="suspendSource = manual" vertex="1">
+          <mxGeometry height="30" width="160" x="300" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="src-p" parent="1" style="text;html=1;fontSize=12;align=center;" value="suspendSource = pool_manual" vertex="1">
+          <mxGeometry height="30" width="180" x="280" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="e-q" edge="1" parent="1" source="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="s2" value="达量自动停机（池内/池外）">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="280" y="230" />
+              <mxPoint x="280" y="150" />
+              <mxPoint x="430" y="150" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-m" edge="1" parent="1" source="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="s2" value="月固定池外手动停机">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-p" edge="1" parent="1" source="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="s2" value="月固定池批量停机成功（覆盖写入来源）">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="280" y="230" />
+              <mxPoint x="280" y="310" />
+              <mxPoint x="430" y="310" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-resume-pool" edge="1" parent="1" source="s2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="s1" value="本池批量复机成功（仅 pool_manual）">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="570" y="120" />
+              <mxPoint x="160" y="120" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-auto" edge="1" parent="1" source="s2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="s1" value="次月 1 日自动复机任务（仅 quota / manual）">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="570" y="40" />
+              <mxPoint x="160" y="40" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-stay" edge="1" parent="1" source="s2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="s3" value="pool_manual：到达后续月初">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-fail-resume" edge="1" parent="1" source="s2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;" target="s4" value="本池批量复机（quota / manual）">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

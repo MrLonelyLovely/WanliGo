@@ -46,7 +46,18 @@ const customerOptions = [
   "Ingoo Holding Limited"
 ];
 
-const dataPoolTypes = ["预购流量池", "共享流量池"];
+const dataPoolTypes = ["预购流量池", "共享流量池", "月固定流量池"];
+const MONTHLY_FIXED_POOL_TYPE = "月固定流量池";
+
+function isMonthlyFixedPoolType(poolOrType) {
+  const type = typeof poolOrType === "string" ? poolOrType : poolOrType?.poolType;
+  return type === MONTHLY_FIXED_POOL_TYPE;
+}
+
+function isContractDataPoolType(poolOrType) {
+  const type = typeof poolOrType === "string" ? poolOrType : poolOrType?.poolType;
+  return type === "预购流量池" || type === MONTHLY_FIXED_POOL_TYPE;
+}
 const dataPoolStatuses = ["开启", "关闭"];
 const dataPoolPackageTemplates = [
   "WLC_Z5_Fixed_260325",
@@ -80,7 +91,8 @@ const dataPools = [
   { id: 7, poolName: "预购-APAC池", customerName: "Ingoo Holding Limited", poolType: "预购流量池", packageTemplate: "APAC_POSTPAID_Z1", totalQuota: "500 GB", inPoolUsage: "120 GB", monthlyOverPoolUsage: "0 MB", monthlyOverUsage: "8 MB", monthlyRemaining: "380 GB", usedCards: 26, totalCards: null, status: "开启", overageEnabled: true, remark: "APAC预购池", createdAt: "2026-03-15 09:20:00", contractMonths: 12, pendingRenewal: { totalQuota: "800 GB", contractMonths: 24 } },
   { id: 8, poolName: "预购-EU池", customerName: "万利通信技术（深圳）有限公司", poolType: "预购流量池", packageTemplate: "WanliGO_EU27", totalQuota: "2 TB", inPoolUsage: "86 GB", monthlyOverPoolUsage: "0 MB", monthlyOverUsage: "0 MB", monthlyRemaining: "1962 GB", usedCards: 18, totalCards: null, status: "开启", overageEnabled: false, remark: "欧洲预购池", createdAt: "2026-05-20 11:08:33", contractMonths: 24 },
   { id: 9, poolName: "预购-Arqia池", customerName: "中亿（深圳）信息科技有限公司", poolType: "预购流量池", packageTemplate: "Arqia Z5", totalQuota: "800 GB", inPoolUsage: "210 GB", monthlyOverPoolUsage: "16 MB", monthlyOverUsage: "2 MB", monthlyRemaining: "590 GB", usedCards: 40, totalCards: null, status: "开启", overageEnabled: true, remark: "拉美预购池", createdAt: "2026-01-10 16:45:00", contractMonths: 36 },
-  { id: 10, poolName: "预购-2143池", customerName: "万利通信技术（深圳）有限公司", poolType: "预购流量池", packageTemplate: "2143", totalQuota: "100 GB", inPoolUsage: "12 GB", monthlyOverPoolUsage: "0 MB", monthlyOverUsage: "0 MB", monthlyRemaining: "88 GB", usedCards: 5, totalCards: null, status: "关闭", overageEnabled: false, remark: "短合约预购池", createdAt: "2026-08-01 08:30:00", contractMonths: 6 }
+  { id: 10, poolName: "预购-2143池", customerName: "万利通信技术（深圳）有限公司", poolType: "预购流量池", packageTemplate: "2143", totalQuota: "100 GB", inPoolUsage: "12 GB", monthlyOverPoolUsage: "0 MB", monthlyOverUsage: "0 MB", monthlyRemaining: "88 GB", usedCards: 5, totalCards: null, status: "关闭", overageEnabled: false, remark: "短合约预购池", createdAt: "2026-08-01 08:30:00", contractMonths: 6 },
+  { id: 11, poolName: "月固定-欧洲池", customerName: "万利通信技术（深圳）有限公司", poolType: MONTHLY_FIXED_POOL_TYPE, packageTemplate: "WanliGO_EU27", totalQuota: "600 GB", monthlyFixedQuota: "600 GB", inPoolUsage: "182 GB", monthlyOverPoolUsage: "0 MB", monthlyOverUsage: "1.5 GB", monthlyRemaining: "418 GB", usedCards: 6, totalCards: null, status: "开启", overageEnabled: true, remark: "每月固定容量，月初重置", createdAt: "2026-09-01 00:00:00", contractMonths: 24, poolCapacityFee: 3600, poolCapacityFeeCurrency: "CNY", poolCardMonthlyFee: 8, poolCardMonthlyFeeCurrency: "CNY", billingCycle: "2026-11" }
 ];
 
 const dataPoolHistories = [
@@ -88,7 +100,8 @@ const dataPoolHistories = [
   { id: 2, poolId: 8, poolName: "预购-EU池", customerName: "万利通信技术（深圳）有限公司", poolType: "预购流量池", roamingConfig: "WanliGO_EU27", totalQuota: "1 TB", inPoolUsage: "940 GB", usedCards: 12, totalCards: null, contractMonths: 24, effectiveAt: "2024-05-20 11:08:33", expireAt: "2026-05-20 11:08:33", invalidAt: "2026-05-20 11:08:33" },
   { id: 3, poolId: 9, poolName: "预购-Arqia池", customerName: "中亿（深圳）信息科技有限公司", poolType: "预购流量池", roamingConfig: "Arqia Z5", totalQuota: "600 GB", inPoolUsage: "588 GB", usedCards: 32, totalCards: null, contractMonths: 36, effectiveAt: "2023-01-10 16:45:00", expireAt: "2026-01-10 16:45:00", invalidAt: "2026-01-10 16:45:00" },
   { id: 4, poolId: 9, poolName: "预购-Arqia池", customerName: "中亿（深圳）信息科技有限公司", poolType: "预购流量池", roamingConfig: "Arqia Z5", totalQuota: "400 GB", inPoolUsage: "392 GB", usedCards: 20, totalCards: null, contractMonths: 36, effectiveAt: "2020-01-10 16:45:00", expireAt: "2023-01-10 16:45:00", invalidAt: "2023-01-10 16:45:00" },
-  { id: 5, poolId: 10, poolName: "预购-2143池", customerName: "万利通信技术（深圳）有限公司", poolType: "预购流量池", roamingConfig: "2143", totalQuota: "80 GB", inPoolUsage: "76 GB", usedCards: 4, totalCards: null, contractMonths: 6, effectiveAt: "2026-02-01 08:30:00", expireAt: "2026-08-01 08:30:00", invalidAt: "2026-08-01 08:30:00" }
+  { id: 5, poolId: 10, poolName: "预购-2143池", customerName: "万利通信技术（深圳）有限公司", poolType: "预购流量池", roamingConfig: "2143", totalQuota: "80 GB", inPoolUsage: "76 GB", usedCards: 4, totalCards: null, contractMonths: 6, effectiveAt: "2026-02-01 08:30:00", expireAt: "2026-08-01 08:30:00", invalidAt: "2026-08-01 08:30:00" },
+  { id: 6, poolId: 11, poolName: "月固定-欧洲池", customerName: "万利通信技术（深圳）有限公司", poolType: MONTHLY_FIXED_POOL_TYPE, roamingConfig: "WanliGO_EU27", totalQuota: "600 GB", inPoolUsage: "538 GB", usedCards: 6, totalCards: null, contractMonths: 24, effectiveAt: "2026-10-01 00:00:00", expireAt: "2026-11-01 00:00:00", invalidAt: "2026-11-01 00:00:00", billingCycle: "2026-10", poolCapacityFee: 3600, poolCardMonthlyFee: 8 }
 ];
 
 const dataPoolCardStatuses = ["active", "active test", "suspend", "cancel", "expired"];
@@ -101,7 +114,8 @@ const dataPoolCards = (() => {
     { poolId: 7, count: 6, packageType: "Monthly PAYG", packageName: "APAC_POSTPAID_Z1", region: "Singapore" },
     { poolId: 8, count: 5, packageType: "Monthly Fixed", packageName: "WanliGO_EU27", region: "France" },
     { poolId: 9, count: 8, packageType: "Monthly PAYG", packageName: "Arqia Z5", region: "Brazil" },
-    { poolId: 10, count: 3, packageType: "Monthly Fixed", packageName: "2143", region: "China5" }
+    { poolId: 10, count: 3, packageType: "Monthly Fixed", packageName: "2143", region: "China5" },
+    { poolId: 11, count: 6, packageType: "Monthly PAYG", packageName: "WanliGO_EU27", region: "France" }
   ];
   const rows = [];
   let id = 1;
@@ -116,12 +130,13 @@ const dataPoolCards = (() => {
         packageName: spec.packageName,
         region: spec.region,
         poolBilling: "流量结算",
-        status: ["active", "active test", "suspend", "cancel", "expired"][index] || "active",
+        status: spec.poolId === 11 ? ["suspend", "active test", "active", "active", "active", "active"][index] : (["active", "active test", "suspend", "cancel", "expired"][index] || "active"),
         poolPresence: index === 1 ? "待出池" : "在池",
-        totalUsage: "0 GB",
-        monthUsage: "0 MB",
-        inPoolUsage: "0 MB",
-        outPoolUsage: "0 MB",
+        totalUsage: spec.poolId === 11 ? `${[46, 0, 28, 62, 31, 16][index]} GB` : "0 GB",
+        monthUsage: spec.poolId === 11 ? `${[46, 0, 28, 62, 31, 16][index]} GB` : "0 MB",
+        inPoolUsage: spec.poolId === 11 ? `${[45, 0, 28, 61, 31, 16][index]} GB` : "0 MB",
+        outPoolUsage: spec.poolId === 11 ? `${[1, 0, 0, 1, 0, 0][index]} GB` : "0 MB",
+        suspendSource: spec.poolId === 11 && index === 0 ? "人工批量停机" : "",
         cardThreshold: "0 MB"
       });
     }
@@ -566,6 +581,128 @@ const dataPoolCardLogs = [
     ]
   }
 ];
+
+dataPoolCardLogs.unshift({
+  id: 24,
+  batchNo: "DP202611050001",
+  operatedAt: "2026-11-05 10:18:36",
+  effectiveAt: "2026-11-05 10:18:36",
+  operator: "admin",
+  poolId: 11,
+  poolName: "月固定-欧洲池",
+  actionType: "停机",
+  method: "导入",
+  iccids: [
+    "89581805570205984629",
+    "89581805570205984629",
+    "89860404112026119901",
+    "89581805570205984605",
+    "89581805570205984613",
+    "1234567890123456789",
+    "89581805570205984645"
+  ],
+  fileName: "月固定欧洲池_批量停机_1105.xlsx",
+  result: "部份成功",
+  totalCount: 7,
+  successCount: 2,
+  failCount: 5,
+  details: [
+    { iccid: "89581805570205984629", result: "成功", failReason: "", effectiveAt: "2026-11-05 10:18:36" },
+    { iccid: "89581805570205984629", result: "失败", failReason: "ICCID重复", effectiveAt: "-" },
+    { iccid: "89860404112026119901", result: "失败", failReason: "ICCID不在当前流量池", effectiveAt: "-" },
+    { iccid: "89581805570205984605", result: "失败", failReason: "卡片已停机", effectiveAt: "-" },
+    { iccid: "89581805570205984613", result: "失败", failReason: "当前状态不允许停机", effectiveAt: "-" },
+    { iccid: "1234567890123456789", result: "失败", failReason: "ICCID格式不正确", effectiveAt: "-" },
+    { iccid: "89581805570205984645", result: "成功", failReason: "", effectiveAt: "2026-11-05 10:18:36" }
+  ]
+});
+
+dataPoolCardLogs.unshift(
+  {
+    id: 25,
+    batchNo: "DP202611080001",
+    operatedAt: "2026-11-08 14:22:10",
+    effectiveAt: "2026-11-08 14:22:10",
+    operator: "admin",
+    poolId: 11,
+    poolName: "月固定-欧洲池",
+    actionType: "复机",
+    method: "导入",
+    iccids: [
+      "89581805570205984605",
+      "89581805570205984605",
+      "89860404112026119902",
+      "89581805570205984629",
+      "89581805570205984613",
+      "1234567890123456788"
+    ],
+    fileName: "月固定欧洲池_批量复机_1108.xlsx",
+    result: "部份成功",
+    totalCount: 6,
+    successCount: 1,
+    failCount: 5,
+    details: [
+      { iccid: "89581805570205984605", result: "成功", failReason: "", effectiveAt: "2026-11-08 14:22:10" },
+      { iccid: "89581805570205984605", result: "失败", failReason: "ICCID重复", effectiveAt: "-" },
+      { iccid: "89860404112026119902", result: "失败", failReason: "ICCID不在当前流量池", effectiveAt: "-" },
+      { iccid: "89581805570205984629", result: "失败", failReason: "卡片当前无需复机", effectiveAt: "-" },
+      { iccid: "89581805570205984613", result: "失败", failReason: "卡片当前无需复机", effectiveAt: "-" },
+      { iccid: "1234567890123456788", result: "失败", failReason: "ICCID格式不正确", effectiveAt: "-" }
+    ]
+  },
+  {
+    id: 26,
+    batchNo: "DP202610280001",
+    operatedAt: "2026-10-28 09:16:40",
+    effectiveAt: "2026-10-28 09:16:40",
+    operator: "ops_lily",
+    poolId: 11,
+    poolName: "月固定-欧洲池",
+    actionType: "入池",
+    method: "导入",
+    iccids: [
+      ...Array.from({ length: 10 }, (_, index) => `89581805570205985${String(index + 1).padStart(3, "0")}`),
+      "89581805570205984605",
+      "89581805570205985001"
+    ],
+    fileName: "月固定欧洲池_导入入池_1028.xlsx",
+    result: "部份成功",
+    totalCount: 12,
+    successCount: 10,
+    failCount: 2,
+    details: [
+      ...Array.from({ length: 10 }, (_, index) => ({
+        iccid: `89581805570205985${String(index + 1).padStart(3, "0")}`,
+        result: "成功",
+        failReason: "",
+        effectiveAt: "2026-10-28 09:16:40"
+      })),
+      { iccid: "89581805570205984605", result: "失败", failReason: "ICCID已在本池", effectiveAt: "-" },
+      { iccid: "89581805570205985001", result: "失败", failReason: "ICCID重复", effectiveAt: "-" }
+    ]
+  },
+  {
+    id: 27,
+    batchNo: "DP202610200001",
+    operatedAt: "2026-10-20 16:40:12",
+    effectiveAt: "2026-11-01 00:00:00",
+    operator: "product_chen",
+    poolId: 11,
+    poolName: "月固定-欧洲池",
+    actionType: "出池",
+    method: "导入",
+    iccids: ["89581805570205984637", "89860404112026110001"],
+    fileName: "月固定欧洲池_导入出池_1020.xlsx",
+    result: "部份成功",
+    totalCount: 2,
+    successCount: 1,
+    failCount: 1,
+    details: [
+      { iccid: "89581805570205984637", result: "成功", failReason: "", effectiveAt: "2026-11-01 00:00:00" },
+      { iccid: "89860404112026110001", result: "失败", failReason: "ICCID不在当前流量池", effectiveAt: "-" }
+    ]
+  }
+);
 
 const dataPoolCurrencies = ["CNY", "EUR", "USD", "GBP", "BRL"];
 const dataPoolCapacityUnits = ["MB", "GB", "TB"];
@@ -1948,12 +2085,13 @@ const retentionLogs = [
       "89860404112026062805",
       "89860404112026063002",
       "89860404112026062607",
+      "89860404112026062211",
       "89860404112026062112",
       DEMO_DEVICE_ICCID
     ],
-    totalCount: 10,
+    totalCount: 11,
     successCount: 3,
-    failCount: 7,
+    failCount: 8,
     result: "部份成功",
     applyAt: "2026-10-25 15:28:44",
     effectiveAt: "2026-11-01 00:00:00",
@@ -1967,6 +2105,7 @@ const retentionLogs = [
       { iccid: "89860404112026062805", result: "执行失败", failReason: "该卡当前状态已是 cancel" },
       { iccid: "89860404112026063002", result: "执行失败", failReason: "该卡当前状态已是 retention" },
       { iccid: "89860404112026062607", result: "执行失败", failReason: "不满足时间限制" },
+      { iccid: "89860404112026062211", result: "执行失败", failReason: "该卡已在待执行任务中" },
       { iccid: "89860404112026062112", result: "执行成功", failReason: "" },
       { iccid: DEMO_DEVICE_ICCID, result: "执行成功", failReason: "" }
     ]
@@ -2024,7 +2163,8 @@ const iccidPackageLookup = {
 const billPools = [
   { customerId: "43", name: "预购-EU池", type: "预购流量池", allowance: 233000, overPrice: 0.15, outPrice: 0.08 },
   { customerId: "43", name: "预购-APAC池", type: "预购流量池", allowance: 180000, overPrice: 0.12, outPrice: 0.08 },
-  { customerId: "43", name: "共享-亚太Fixed", type: "共享流量池", allowance: 9700, overPrice: 0.2, outPrice: 0.05 }
+  { customerId: "43", name: "共享-亚太Fixed", type: "共享流量池", allowance: 9700, overPrice: 0.2, outPrice: 0.05 },
+  { customerId: "43", name: "月固定-欧洲池", type: MONTHLY_FIXED_POOL_TYPE, allowance: 614400, overPrice: 0.15, outPrice: 0.08, poolCapacityFee: 3600, poolCardMonthlyFee: 8 }
 ];
 
 const billDetailCards = [
@@ -2038,6 +2178,9 @@ const billDetailCards = [
   { customerId: "43", iccid: "89860404112026090033", orderNo: "SO202609033", packageId: "45", packageName: "Monthly Fixed_Z5", poolName: "共享-亚太Fixed", presence: "在池", cardGroup: "归属卡组A", packageFlowFee: 0, packageOutsideFee: 0, monthlyRent: 10, packageFee: 0, rechargeFee: 0, activationDate: "2026-01-22", inMb: 1000, outMb: 0, smsCount: 0, smsFee: 0 },
   { customerId: "43", iccid: "89860404112026090034", orderNo: "SO202609034", packageId: "45", packageName: "Monthly Fixed_Z5", poolName: "共享-亚太Fixed", presence: "active test", cardGroup: "归属卡组A", packageFlowFee: 0, packageOutsideFee: 0, monthlyRent: 0, packageFee: 0, rechargeFee: 0, activationDate: "2026-01-22", inMb: 800, outMb: 0, smsCount: 0, smsFee: 0 },
   { customerId: "43", iccid: "89860404112026090035", orderNo: "SO202609035", packageId: "45", packageName: "Monthly Fixed_Z5", poolName: "共享-亚太Fixed", presence: "cancel", cardGroup: "归属卡组A", packageFlowFee: 0, packageOutsideFee: 0, monthlyRent: 0, packageFee: 0, rechargeFee: 0, activationDate: "2026-01-22", inMb: 0, outMb: 0, smsCount: 0, smsFee: 0 },
+  { customerId: "43", iccid: "89860404112026090101", orderNo: "SO202609101", packageId: "46", packageName: "WanliGO_EU27", poolName: "月固定-欧洲池", presence: "在池", cardGroup: "归属卡组D", packageFlowFee: 0, packageOutsideFee: 0, monthlyRent: 0, packageFee: 0, rechargeFee: 0, activationDate: "2026-09-01", inMb: 47104, outMb: 1024, smsCount: 0, smsFee: 0 },
+  { customerId: "43", iccid: "89860404112026090102", orderNo: "SO202609102", packageId: "46", packageName: "WanliGO_EU27", poolName: "月固定-欧洲池", presence: "在池", cardGroup: "归属卡组D", packageFlowFee: 0, packageOutsideFee: 0, monthlyRent: 0, packageFee: 0, rechargeFee: 0, activationDate: "2026-09-01", inMb: 0, outMb: 0, smsCount: 0, smsFee: 0 },
+  { customerId: "43", iccid: "89860404112026090103", orderNo: "SO202609103", packageId: "46", packageName: "WanliGO_EU27", poolName: "月固定-欧洲池", presence: "在池", cardGroup: "归属卡组D", packageFlowFee: 0, packageOutsideFee: 0, monthlyRent: 0, packageFee: 0, rechargeFee: 0, activationDate: "2026-09-01", inMb: 28672, outMb: 0, smsCount: 0, smsFee: 0 },
   { customerId: "48", iccid: "89860404112026090021", orderNo: "SO202609021", packageId: "45", packageName: "Monthly Fixed_Z5", poolName: "—", presence: "非池卡", cardGroup: "归属卡组A", packageFlowFee: 20, packageOutsideFee: 0, monthlyRent: 8, packageFee: 0, rechargeFee: 0, activationDate: "2026-01-22", inMb: 2048, outMb: 0, smsCount: 0, smsFee: 0 },
   { customerId: "51", iccid: "89860404112026090041", orderNo: "SO202609041", packageId: "51", packageName: "Monthly PAYG_Z1", poolName: "—", presence: "非池卡", cardGroup: "归属卡组B", packageFlowFee: 6, packageOutsideFee: 1.5, monthlyRent: 5, packageFee: 0, rechargeFee: 0, activationDate: "2026-01-22", inMb: 500, outMb: 140, smsCount: 4, smsFee: 0.48 }
 ];
@@ -2062,6 +2205,9 @@ const billUsageRows = [
   ["43", "89860404112026090032", "Monthly Fixed_Z5", "共享-亚太Fixed", "Data", "区域外", "440", "Japan", "10", 600, "MB"],
   ["43", "89860404112026090033", "Monthly Fixed_Z5", "共享-亚太Fixed", "Data", "区域内", "525", "Singapore", "01", 1000, "MB"],
   ["43", "89860404112026090034", "Monthly Fixed_Z5", "共享-亚太Fixed", "Data", "区域内", "460", "China", "01", 800, "MB"],
+  ["43", "89860404112026090101", "WanliGO_EU27", "月固定-欧洲池", "Data", "区域内", "208", "France", "01", 47104, "MB"],
+  ["43", "89860404112026090101", "WanliGO_EU27", "月固定-欧洲池", "Data", "区域外", "460", "China", "00", 1024, "MB"],
+  ["43", "89860404112026090103", "WanliGO_EU27", "月固定-欧洲池", "Data", "区域内", "262", "Germany", "01", 28672, "MB"],
   ["48", "89860404112026090021", "Monthly Fixed_Z5", "—", "Data", "套餐内", "460", "China", "00", 2048, "MB"],
   ["51", "89860404112026090041", "Monthly PAYG_Z1", "—", "Data", "套餐内", "460", "China", "01", 500, "MB"],
   ["51", "89860404112026090041", "Monthly PAYG_Z1", "—", "Data", "套餐外", "310", "United States", "260", 140, "MB"],
@@ -2085,7 +2231,25 @@ function getBillPoolFigures(pool) {
   const packageFeeTotal = rentCards.length * unitPackageFee;
   const overFee = over * pool.overPrice;
   const outsideFee = outside * pool.outPrice;
-  return { inRegion, outside, over, overFee, outsideFee, rent, packageFeeTotal, rentCards: rentCards.length, total: overFee + outsideFee + rent + packageFeeTotal };
+  const usageCards = isMonthlyFixedPoolType(pool.type)
+    ? cards.filter((card) => card.inMb + card.outMb > 0).length
+    : 0;
+  const poolCapacityFee = Number(pool.poolCapacityFee || 0);
+  const poolCardFeeTotal = usageCards * Number(pool.poolCardMonthlyFee || 0);
+  return {
+    inRegion,
+    outside,
+    over,
+    overFee,
+    outsideFee,
+    rent,
+    packageFeeTotal,
+    rentCards: rentCards.length,
+    usageCards,
+    poolCapacityFee,
+    poolCardFeeTotal,
+    total: overFee + outsideFee + rent + packageFeeTotal + poolCapacityFee + poolCardFeeTotal
+  };
 }
 
 function makeMonthlyBill(customerId, customerName, billNo) {
@@ -2226,7 +2390,7 @@ const moduleMeta = {
   },
   dataPool: {
     title: "流量池",
-    desc: "查看和管理预购流量池、共享流量池。",
+    desc: "查看和管理预购流量池、共享流量池和月固定流量池。",
     parent: "服务设备"
   },
   dataPoolCards: {
@@ -2583,15 +2747,15 @@ function renderFilter() {
 
   if (state.module === "dataPoolCards") {
     const pool = getSelectedDataPool();
-    const isPrepaidPool = pool?.poolType === "预购流量池";
-    if (!isPrepaidPool) state.dataPoolCardsTab = "detail";
+    const isContractPool = isContractDataPoolType(pool);
+    if (!isContractPool) state.dataPoolCardsTab = "detail";
     const isHistoryTab = isDataPoolHistoryView();
     const cardCount = pool ? formatDataPoolCards(pool) : "-";
     const poolStatus = pool?.status === "开启" ? "生效中" : "已暂停";
     filterCard.innerHTML = `
       <div class="pool-detail-tab-row">
         <button type="button" class="pool-detail-tab ${state.dataPoolCardsTab === "detail" ? "active" : ""}" data-pool-cards-tab="detail">流量池详情</button>
-        ${isPrepaidPool ? `<button type="button" class="pool-detail-tab ${state.dataPoolCardsTab === "history" ? "active" : ""}" data-pool-cards-tab="history">流量池周期</button>` : ""}
+        ${isContractPool ? `<button type="button" class="pool-detail-tab ${state.dataPoolCardsTab === "history" ? "active" : ""}" data-pool-cards-tab="history">流量池周期</button>` : ""}
         <button type="button" class="pool-basic-close" id="closeDataPoolCards">× 关闭</button>
       </div>
       ${isHistoryTab ? `<form id="filterForm" class="hidden-form"></form>` : `
@@ -2605,6 +2769,10 @@ function renderFilter() {
           ${poolInfoItem("流量池类型", pool?.poolType || "-")}
           ${poolInfoItem("流量池卡数", cardCount)}
           ${poolInfoItem("计费单位", "MB")}
+          ${isMonthlyFixedPoolType(pool) ? poolInfoItem("每月固定容量", pool.monthlyFixedQuota || pool.totalQuota || "-") : ""}
+          ${isMonthlyFixedPoolType(pool) ? poolInfoItem("池容量费用", `${pool.poolCapacityFeeCurrency || "CNY"} ${Number(pool.poolCapacityFee || 0).toFixed(2)}`) : ""}
+          ${isMonthlyFixedPoolType(pool) ? poolInfoItem("池卡月费", `${pool.poolCardMonthlyFeeCurrency || "CNY"} ${Number(pool.poolCardMonthlyFee || 0).toFixed(2)}`) : ""}
+          ${isMonthlyFixedPoolType(pool) ? poolInfoItem("当前容量周期", pool.billingCycle || "-") : ""}
           ${poolInfoItem("超量消费", pool?.overageEnabled ? "开启" : "关闭")}
           ${poolInfoItem("创建人", "admin")}
           ${poolInfoItem("创建时间", pool?.createdAt || "-")}
@@ -3001,20 +3169,25 @@ function renderToolbar() {
     if (isDataPoolHistoryView()) {
       toolbar.innerHTML = "";
     } else {
-      const isPrepaidPool = getSelectedDataPool()?.poolType === "预购流量池";
+      const selectedPool = getSelectedDataPool();
+      const isContractPool = isContractDataPoolType(selectedPool);
+      const isMonthlyFixedPool = isMonthlyFixedPoolType(selectedPool);
       toolbar.innerHTML = `
         <button class="btn pool-add" id="addDataPoolCardBtn">新增</button>
         <button class="btn pool-leave" id="importDataPoolCardBtn">删除</button>
         <button class="btn pool-adjust" id="adjustDataPoolCardBtn">调值</button>
         <button class="btn pool-export" id="exportDataPoolCardBtn">导出</button>
         <button class="btn orange" id="dataPoolCardLogBtn">操作日志</button>
-        ${isPrepaidPool ? `<button class="btn primary" id="renewDataPoolCardBtn">续订</button>` : ""}
+        ${isMonthlyFixedPool ? `<button class="btn danger" id="suspendMonthlyFixedCardsBtn">批量停机</button><button class="btn success" id="resumeMonthlyFixedCardsBtn">批量复机</button>` : ""}
+        ${isContractPool ? `<button class="btn primary" id="renewDataPoolCardBtn">续订</button>` : ""}
       `;
       $("#addDataPoolCardBtn").addEventListener("click", openDataPoolJoinModal);
       $("#adjustDataPoolCardBtn").addEventListener("click", () => showToast("调值"));
       $("#importDataPoolCardBtn").addEventListener("click", openDataPoolImportModal);
       $("#exportDataPoolCardBtn").addEventListener("click", () => {});
       $("#dataPoolCardLogBtn").addEventListener("click", openDataPoolCardLogModal);
+      $("#suspendMonthlyFixedCardsBtn")?.addEventListener("click", () => openMonthlyFixedPoolStatusModal("停机"));
+      $("#resumeMonthlyFixedCardsBtn")?.addEventListener("click", () => openMonthlyFixedPoolStatusModal("复机"));
       $("#renewDataPoolCardBtn")?.addEventListener("click", openDataPoolRenewalModal);
     }
   }
@@ -3943,6 +4116,8 @@ function renderPoolBillTable(rows) {
       <th>池外费用</th>
       <th>总月租费</th>
       <th>总套餐费用</th>
+      <th>池容量费用</th>
+      <th>总池卡月费</th>
       <th>应收费卡数</th>
       <th>账单金额</th>
       <th>操作</th>
@@ -3962,11 +4137,13 @@ function renderPoolBillTable(rows) {
       <td>${formatMoney(figures.outsideFee, bill.currency)}</td>
       <td>${formatMoney(figures.rent, bill.currency)}</td>
       <td>${formatMoney(figures.packageFeeTotal, bill.currency)}</td>
-      <td>${figures.rentCards}</td>
+      <td>${formatMoney(figures.poolCapacityFee, bill.currency)}</td>
+      <td>${formatMoney(figures.poolCardFeeTotal, bill.currency)}</td>
+      <td>${isMonthlyFixedPoolType(pool.type) ? figures.usageCards : figures.rentCards}</td>
       <td class="text-danger">${formatMoney(figures.total, bill.currency)}</td>
       <td><button class="op-btn" data-pool-usage="${escapeAttr(pool.name)}">用量明细</button></td>
     </tr>
-  `).join("") : emptyRow(15);
+  `).join("") : emptyRow(17);
   $$("[data-pool-usage]").forEach((btn) => btn.addEventListener("click", () => {
     state.selectedPoolName = btn.dataset.poolUsage;
     state.usageReturnModule = "poolBill";
@@ -4324,7 +4501,7 @@ function formatDataPoolCards(row) {
 }
 
 function formatDataPoolExpireAt(row) {
-  if (row.poolType !== "预购流量池") return "--";
+  if (!isContractDataPoolType(row)) return "--";
   const months = Number(row.contractMonths);
   if (!row.createdAt || !Number.isInteger(months) || months < 1) return "--";
   const date = new Date(String(row.createdAt).replace(" ", "T"));
@@ -4419,13 +4596,13 @@ function getSelectedDataPool() {
 function isDataPoolHistoryView() {
   return state.module === "dataPoolCards"
     && state.dataPoolCardsTab === "history"
-    && getSelectedDataPool()?.poolType === "预购流量池";
+    && isContractDataPoolType(getSelectedDataPool());
 }
 
 function getDataPoolRegion(pool) {
   if (!pool) return "-";
   if (pool.customerName === "Ingoo Holding Limited") return "Arqia Z5";
-  if (pool.poolType === "预购流量池") return "53";
+  if (isContractDataPoolType(pool)) return "53";
   return "China5";
 }
 
@@ -4861,22 +5038,134 @@ function openDataPoolImportModal() {
   openModal(fragment);
 }
 
+function downloadMonthlyFixedPoolStatusTemplate(actionType) {
+  const pool = getSelectedDataPool();
+  const cards = dataPoolCards
+    .filter((row) => row.poolId === pool?.id)
+    .filter((row) => actionType === "停机" ? row.status === "active" : row.status === "suspend")
+    .slice(0, 3);
+  const rows = (cards.length ? cards : [{ iccid: "89860404112026070001" }])
+    .map((row) => `<tr><td>${row.iccid}</td></tr>`)
+    .join("");
+  downloadBlob(
+    `<table><tr><th>ICCID</th></tr>${rows}</table>`,
+    `月固定流量池_批量${actionType}模版.xls`,
+    "application/vnd.ms-excel;charset=utf-8"
+  );
+}
+
+function applyMonthlyFixedPoolStatusImport(actionType, iccids, file) {
+  const pool = getSelectedDataPool();
+  if (!pool || !isMonthlyFixedPoolType(pool)) {
+    showToast("仅月固定流量池支持此操作");
+    return;
+  }
+  const effectiveAt = formatDateTime(new Date());
+  const details = [];
+  const unique = new Set();
+  iccids.forEach((iccid) => {
+    if (unique.has(iccid)) {
+      details.push({ iccid, result: "失败", failReason: "ICCID重复", effectiveAt: "-" });
+      return;
+    }
+    unique.add(iccid);
+    const card = dataPoolCards.find((row) => row.poolId === pool.id && row.iccid === iccid);
+    if (!card) {
+      details.push({ iccid, result: "失败", failReason: "ICCID不在当前流量池", effectiveAt: "-" });
+      return;
+    }
+    if (actionType === "停机") {
+      if (card.status === "suspend") {
+        details.push({ iccid, result: "失败", failReason: "卡片已停机", effectiveAt: "-" });
+        return;
+      }
+      if (card.status !== "active") {
+        details.push({ iccid, result: "失败", failReason: "当前状态不允许停机", effectiveAt: "-" });
+        return;
+      }
+      card.status = "suspend";
+      card.suspendSource = "人工批量停机";
+    } else {
+      if (card.status !== "suspend") {
+        details.push({ iccid, result: "失败", failReason: "卡片当前无需复机", effectiveAt: "-" });
+        return;
+      }
+      card.status = "active";
+      card.suspendSource = "";
+    }
+    details.push({ iccid, result: "成功", failReason: "", effectiveAt });
+  });
+  appendDataPoolCardLog({
+    pool,
+    actionType,
+    method: "导入",
+    iccids,
+    fileName: file?.name || `月固定流量池_批量${actionType}.xlsx`,
+    sourceFile: file || null,
+    details
+  });
+  const success = details.filter((item) => item.result === "成功").length;
+  const fail = details.length - success;
+  state.page = 1;
+  render();
+  showToast(actionType === "停机"
+    ? `停机已生效：${success} 张成功，${fail} 张失败`
+    : `复机已生效：${success} 张成功，${fail} 张失败`);
+}
+
+function openMonthlyFixedPoolStatusModal(actionType) {
+  const pool = getSelectedDataPool();
+  if (!pool || !isMonthlyFixedPoolType(pool)) {
+    showToast("仅月固定流量池支持批量停复机");
+    return;
+  }
+  const fragment = $("#monthlyFixedPoolStatusModalTemplate").content.cloneNode(true);
+  const form = fragment.querySelector("#monthlyFixedPoolStatusForm");
+  fragment.querySelector("#monthlyFixedPoolStatusTitle").textContent = `批量${actionType}`;
+  fragment.querySelector("#downloadMonthlyFixedPoolStatusTemplate").addEventListener("click", () => {
+    downloadMonthlyFixedPoolStatusTemplate(actionType);
+  });
+  bindUploadFileName(fragment);
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const file = form.elements.batchFile.files[0];
+    if (!validateDataPoolImportFile(file)) return;
+    const iccids = await readIccidsFromUpload(file);
+    closeModal(form);
+    applyMonthlyFixedPoolStatusImport(actionType, iccids, file);
+  });
+  openModal(fragment);
+}
+
 function openDataPoolRenewalModal() {
   const pool = getSelectedDataPool();
   if (!pool) {
     showToast("未找到当前流量池");
     return;
   }
-  const isPrepaid = pool.poolType === "预购流量池";
+  const isPrepaid = isContractDataPoolType(pool);
+  const isMonthlyFixedPool = isMonthlyFixedPoolType(pool);
   const fragment = $("#dataPoolRenewalModalTemplate").content.cloneNode(true);
   const form = fragment.querySelector("#dataPoolRenewalForm");
   const sharedPanel = fragment.querySelector(".pool-renewal-shared-panel");
   const prepaidPanel = fragment.querySelector(".pool-renewal-prepaid-panel");
+  const currencyOptions = `<option value="">请选择</option>${dataPoolCurrencies.map((currency) => `<option value="${currency}">${currency}</option>`).join("")}`;
 
   form.elements.poolName.value = pool.poolName;
   form.elements.customerName.value = pool.customerName;
   sharedPanel.hidden = isPrepaid;
   prepaidPanel.hidden = !isPrepaid;
+  fragment.querySelectorAll(".monthly-fixed-renewal-field").forEach((field) => {
+    field.hidden = !isMonthlyFixedPool;
+  });
+  if (isMonthlyFixedPool) {
+    form.elements.poolCapacityFeeCurrency.innerHTML = currencyOptions;
+    form.elements.poolCardMonthlyFeeCurrency.innerHTML = currencyOptions;
+    form.elements.poolCapacityFeeCurrency.value = pool.poolCapacityFeeCurrency || "CNY";
+    form.elements.poolCapacityFee.value = "";
+    form.elements.poolCardMonthlyFeeCurrency.value = pool.poolCardMonthlyFeeCurrency || "CNY";
+    form.elements.poolCardMonthlyFee.value = "";
+  }
   if (!isPrepaid) {
     form.elements.packageName.value = pool.packageTemplate || "";
     bindUploadFileName(fragment);
@@ -4899,6 +5188,31 @@ function openDataPoolRenewalModal() {
       if (!months || months < 1) {
         showToast("请输入有效时长");
         return;
+      }
+      if (isMonthlyFixedPool) {
+        const capacityFee = Number(form.elements.poolCapacityFee.value);
+        const cardMonthlyFee = Number(form.elements.poolCardMonthlyFee.value);
+        if (!form.elements.poolCapacityFeeCurrency.value || !form.elements.poolCapacityFee.value.trim()) {
+          showToast("请输入池容量费用");
+          return;
+        }
+        if (!Number.isFinite(capacityFee) || capacityFee < 0) {
+          showToast("请输入有效的池容量费用");
+          return;
+        }
+        if (!form.elements.poolCardMonthlyFeeCurrency.value || !form.elements.poolCardMonthlyFee.value.trim()) {
+          showToast("请输入池卡月费");
+          return;
+        }
+        if (!Number.isFinite(cardMonthlyFee) || cardMonthlyFee < 0) {
+          showToast("请输入有效的池卡月费");
+          return;
+        }
+        pool.monthlyFixedQuota = `${capacity} ${unit}`;
+        pool.poolCapacityFee = capacityFee;
+        pool.poolCapacityFeeCurrency = form.elements.poolCapacityFeeCurrency.value;
+        pool.poolCardMonthlyFee = cardMonthlyFee;
+        pool.poolCardMonthlyFeeCurrency = form.elements.poolCardMonthlyFeeCurrency.value;
       }
       snapshotDataPoolHistory(pool);
       pool.totalQuota = `${capacity} ${unit}`;
@@ -4953,10 +5267,11 @@ function formatDataPoolLogIccids(iccids = []) {
 }
 
 function appendDataPoolCardLog({ pool, actionType, method, iccids = [], fileName = "", sourceFile = null, details = [] }) {
-  if (!pool || method !== "导入" || !["入池", "出池"].includes(actionType)) return;
+  if (!pool || method !== "导入" || !["入池", "出池", "停机", "复机"].includes(actionType)) return;
   const successCount = details.filter((item) => item.result === "成功").length;
   const failCount = details.filter((item) => item.result === "失败").length;
   const operatedAt = formatDateTime(new Date());
+  const successfulEffectiveAt = details.find((item) => item.result === "成功" && item.effectiveAt)?.effectiveAt || "";
   dataPoolCardLogs.unshift({
     id: nextDataPoolCardLogId(),
     batchNo: nextDataPoolLogBatchNo(operatedAt),
@@ -4969,6 +5284,7 @@ function appendDataPoolCardLog({ pool, actionType, method, iccids = [], fileName
     iccids,
     fileName,
     sourceFile,
+    effectiveAt: successfulEffectiveAt,
     result: getDataPoolLogResult(successCount, failCount),
     totalCount: details.length,
     successCount,
@@ -5123,15 +5439,59 @@ function exportDataPoolLogDetail(row) {
 
 function openDataPoolCardLogDetailModal(row) {
   const fragment = $("#dataPoolCardLogDetailTemplate").content.cloneNode(true);
+  const body = fragment.querySelector("#dataPoolCardLogDetailBody");
+  const pagination = fragment.querySelector("#dataPoolCardLogDetailPagination");
   const details = row.details || [];
-  fragment.querySelector("#dataPoolCardLogDetailBody").innerHTML = details.length ? details.map((item) => `
-    <tr>
-      <td>${item.iccid}</td>
-      <td><span class="status ${item.result === "成功" ? "success" : "fail"}">${item.result}</span></td>
-      <td class="content-cell" title="${escapeAttr(item.failReason || "-")}">${item.failReason || "-"}</td>
-    </tr>
-  `).join("") : emptyRow(3);
+  const detailState = { page: 1, pageSize: 10 };
+  fragment.querySelector("[data-pool-log-effective-at]")?.remove();
+
+  const renderDetails = () => {
+    const totalPages = Math.max(1, Math.ceil(details.length / detailState.pageSize));
+    detailState.page = Math.min(detailState.page, totalPages);
+    const start = (detailState.page - 1) * detailState.pageSize;
+    const pageRows = details.slice(start, start + detailState.pageSize);
+    body.innerHTML = pageRows.length ? pageRows.map((item) => `
+      <tr>
+        <td>${item.iccid}</td>
+        <td><span class="status ${item.result === "成功" ? "success" : "fail"}">${item.result}</span></td>
+        <td class="content-cell" title="${escapeAttr(item.failReason || "-")}">${item.failReason || "-"}</td>
+      </tr>
+    `).join("") : emptyRow(3);
+
+    const pageButtons = Array.from({ length: totalPages }, (_, index) => index + 1)
+      .map((page) => `<button class="page-btn ${page === detailState.page ? "active" : ""}" data-pool-log-detail-page="${page}">${page}</button>`)
+      .join("");
+    pagination.innerHTML = `
+      <span>共 ${details.length} 条</span>
+      <select id="dataPoolCardLogDetailPageSize">
+        ${[10, 20, 50].map((size) => `<option value="${size}" ${size === detailState.pageSize ? "selected" : ""}>${size}条/页</option>`).join("")}
+      </select>
+      <button class="page-btn" data-pool-log-detail-page="${Math.max(1, detailState.page - 1)}">‹</button>
+      ${pageButtons}
+      <button class="page-btn" data-pool-log-detail-page="${Math.min(totalPages, detailState.page + 1)}">›</button>
+      <span>前往</span>
+      <input id="dataPoolCardLogDetailGotoPage" type="number" min="1" max="${totalPages}" value="${detailState.page}">
+      <span>页</span>
+    `;
+    pagination.querySelector("#dataPoolCardLogDetailPageSize").addEventListener("change", (event) => {
+      detailState.pageSize = Number(event.target.value);
+      detailState.page = 1;
+      renderDetails();
+    });
+    pagination.querySelectorAll("[data-pool-log-detail-page]").forEach((button) => {
+      button.addEventListener("click", () => {
+        detailState.page = Number(button.dataset.poolLogDetailPage);
+        renderDetails();
+      });
+    });
+    pagination.querySelector("#dataPoolCardLogDetailGotoPage").addEventListener("change", (event) => {
+      detailState.page = Math.min(totalPages, Math.max(1, Number(event.target.value || 1)));
+      renderDetails();
+    });
+  };
+
   fragment.querySelector("#dataPoolCardLogDetailExport").addEventListener("click", () => exportDataPoolLogDetail(row));
+  renderDetails();
   openModal(fragment, true);
 }
 
@@ -5141,6 +5501,17 @@ function openDataPoolCardLogModal() {
   const body = fragment.querySelector("#dataPoolCardLogBody");
   const pagination = fragment.querySelector("#dataPoolCardLogPagination");
   const pool = getSelectedDataPool();
+  const isMonthlyFixedPool = isMonthlyFixedPoolType(pool);
+  if (isMonthlyFixedPool) {
+    const actionType = form.elements.actionType;
+    ["停机", "复机"].forEach((type) => {
+      const option = document.createElement("option");
+      option.value = type;
+      option.textContent = type;
+      actionType.append(option);
+    });
+  }
+  fragment.querySelector("[data-pool-log-effective-at]")?.remove();
   const logState = {
     page: 1,
     pageSize: 10,
@@ -5155,6 +5526,7 @@ function openDataPoolCardLogModal() {
       const inEnd = !filters.endDate || date <= filters.endDate;
       return row.poolId === pool?.id
         && row.method === "导入"
+        && (isMonthlyFixedPool || !["停机", "复机"].includes(row.actionType))
         && inStart
         && inEnd
         && includes(row.operator, filters.operator)
@@ -5267,7 +5639,7 @@ function nextDataPoolHistoryId() {
 }
 
 function snapshotDataPoolHistory(pool) {
-  if (!pool || pool.poolType !== "预购流量池") return;
+  if (!pool || !isContractDataPoolType(pool)) return;
   const expireAt = formatDataPoolExpireAt(pool);
   const operatedAt = formatDateTime(new Date());
   dataPoolHistories.unshift({
@@ -5275,7 +5647,7 @@ function snapshotDataPoolHistory(pool) {
     poolId: pool.id,
     poolName: pool.poolName,
     customerName: pool.customerName,
-    poolType: "预购流量池",
+    poolType: pool.poolType,
     roamingConfig: pool.packageTemplate,
     totalQuota: pool.totalQuota,
     inPoolUsage: pool.inPoolUsage,
@@ -5284,7 +5656,10 @@ function snapshotDataPoolHistory(pool) {
     contractMonths: pool.contractMonths,
     effectiveAt: pool.createdAt,
     expireAt,
-    invalidAt: isDataPoolDateReached(expireAt) ? expireAt : operatedAt
+    invalidAt: isDataPoolDateReached(expireAt) ? expireAt : operatedAt,
+    billingCycle: pool.billingCycle,
+    poolCapacityFee: pool.poolCapacityFee,
+    poolCardMonthlyFee: pool.poolCardMonthlyFee
   });
 }
 
@@ -7932,6 +8307,8 @@ function openDataPoolForm() {
   customerSelect.innerHTML = `<option value="">请输入客户名称</option>${customerOptions.map((name) => `<option value="${escapeAttr(name)}">${name}</option>`).join("")}`;
   form.elements.overPoolCurrency.innerHTML = currencyOptions;
   form.elements.outPoolCurrency.innerHTML = currencyOptions;
+  form.elements.poolCapacityFeeCurrency.innerHTML = currencyOptions;
+  form.elements.poolCardMonthlyFeeCurrency.innerHTML = currencyOptions;
   form.elements.capacityUnit.innerHTML = `<option value="">单位</option>${dataPoolCapacityUnits.map((item) => `<option value="${item}">${item}</option>`).join("")}`;
 
   const clearFieldError = (field) => {
@@ -7974,28 +8351,34 @@ function openDataPoolForm() {
   const updateDataPoolFormLayout = () => {
     const poolType = form.elements.poolType.value;
     const isPrepaidType = poolType === "预购流量池";
-    const selectedPackage = isPrepaidType ? null : getSelectedPackage();
+    const isMonthlyFixedType = isMonthlyFixedPoolType(poolType);
+    const isContractPoolType = isPrepaidType || isMonthlyFixedType;
+    const selectedPackage = isContractPoolType ? null : getSelectedPackage();
     const isPrePay = selectedPackage?.type === "Pre-Pay";
     const isShared = poolType === "共享流量池";
-    const isPrepaid = isPrepaidType || !poolType;
+    const isPrepaid = isContractPoolType || !poolType;
 
-    const selectedRoaming = isPrepaidType ? getSelectedRoaming() : null;
+    const selectedRoaming = isContractPoolType ? getSelectedRoaming() : null;
     const regionSource = selectedPackage || selectedRoaming;
     const regionLabel = getField("regions")?.querySelector(".data-pool-label");
 
-    toggleField("packageName", !isPrepaidType);
-    toggleField("roamingConfig", isPrepaidType);
+    toggleField("packageName", !isContractPoolType);
+    toggleField("roamingConfig", isContractPoolType);
     toggleField("capacity", isPrepaid);
     toggleField("cardCount", isShared);
+    toggleField("poolCapacityFee", isMonthlyFixedType);
+    toggleField("poolCardMonthlyFee", isMonthlyFixedType);
     toggleField("regions", Boolean(regionSource));
-    toggleField("contractMonths", isPrepaidType);
-    const showRoamingDetail = isPrepaidType && Boolean(selectedRoaming);
+    toggleField("contractMonths", isContractPoolType);
+    const showRoamingDetail = isContractPoolType && Boolean(selectedRoaming);
     toggleField("packageDetail", isPrePay || showRoamingDetail);
-    form.elements.contractMonths.disabled = !isPrepaidType;
+    form.elements.contractMonths.disabled = !isContractPoolType;
+    const capacityLabel = getField("capacity")?.querySelector(".data-pool-label");
+    if (capacityLabel) capacityLabel.innerHTML = isMonthlyFixedType ? "<i>*</i>每月固定容量" : "<i>*</i>流量池容量";
     const detailTitle = getField("packageDetail")?.querySelector("h3");
     if (detailTitle) detailTitle.textContent = showRoamingDetail ? "关联漫游明细" : "关联套餐明细";
 
-    if (regionLabel) regionLabel.textContent = isPrepaidType ? "池目标区域" : "套餐目标区域";
+    if (regionLabel) regionLabel.textContent = isContractPoolType ? "池目标区域" : "套餐目标区域";
     form.querySelector("#dataPoolRegionBox").innerHTML = regionSource
       ? regionSource.regions.map((region) => `<span class="region-tag">${region}</span>`).join("")
       : "";
@@ -8017,7 +8400,7 @@ function openDataPoolForm() {
         `).join("")
       : (isPrePay || showRoamingDetail ? emptyRow(showRoamingDetail ? 6 : 7) : "");
 
-    if (!isPrepaidType) form.elements.contractMonths.value = "";
+    if (!isContractPoolType) form.elements.contractMonths.value = "";
   };
 
   const validatePriceField = (fieldName, currencyName, amountName) => {
@@ -8026,6 +8409,7 @@ function openDataPoolForm() {
     const currency = form.elements[currencyName].value.trim();
     const amount = form.elements[amountName].value.trim();
     if (!currency || !amount) return setFieldError(field, "费用不能为空");
+    if (!Number.isFinite(Number(amount)) || Number(amount) < 0) return setFieldError(field, "请输入大于或等于 0 的金额");
     clearFieldError(field);
     return true;
   };
@@ -8051,14 +8435,22 @@ function openDataPoolForm() {
     clearFieldError(getField("contractMonths"));
     fillPackageSelect(customerSelect.value, packageSelect.value);
     updateDataPoolFormLayout();
-    if (form.elements.poolType.value === "预购流量池") form.elements.contractMonths.value = "24";
+    if (isContractDataPoolType(form.elements.poolType.value)) form.elements.contractMonths.value = "24";
   });
-  ["poolName", "overPoolPrice", "outPoolPrice", "capacity", "cardCount", "contractMonths"].forEach((name) => {
+  ["poolName", "overPoolPrice", "outPoolPrice", "capacity", "cardCount", "contractMonths", "poolCapacityFee", "poolCardMonthlyFee"].forEach((name) => {
     form.elements[name].addEventListener("input", () => clearFieldError(getField(name)));
   });
-  ["overPoolCurrency", "outPoolCurrency", "capacityUnit"].forEach((name) => {
+  ["overPoolCurrency", "outPoolCurrency", "capacityUnit", "poolCapacityFeeCurrency", "poolCardMonthlyFeeCurrency"].forEach((name) => {
     form.elements[name].addEventListener("change", () => {
-      const fieldName = name.startsWith("overPool") ? "overPoolPrice" : name.startsWith("outPool") ? "outPoolPrice" : "capacity";
+      const fieldName = name.startsWith("overPool")
+        ? "overPoolPrice"
+        : name.startsWith("outPool")
+          ? "outPoolPrice"
+          : name.startsWith("poolCapacityFee")
+            ? "poolCapacityFee"
+            : name.startsWith("poolCardMonthlyFee")
+              ? "poolCardMonthlyFee"
+              : "capacity";
       clearFieldError(getField(fieldName));
     });
   });
@@ -8072,6 +8464,8 @@ function openDataPoolForm() {
     const poolType = form.elements.poolType.value;
     const isShared = poolType === "共享流量池";
     const isPrepaidType = poolType === "预购流量池";
+    const isMonthlyFixedType = isMonthlyFixedPoolType(poolType);
+    const isContractPoolType = isPrepaidType || isMonthlyFixedType;
     let valid = true;
 
     if (!form.elements.poolName.value.trim()) valid = setFieldError(getField("poolName"), "流量池名称不能为空") && valid;
@@ -8080,7 +8474,7 @@ function openDataPoolForm() {
     else clearFieldError(getField("customerName"));
     if (!poolType) valid = setFieldError(getField("poolType"), "请选择流量池类型") && valid;
     else clearFieldError(getField("poolType"));
-    if (isPrepaidType) {
+    if (isContractPoolType) {
       if (!form.elements.roamingConfig.value) valid = setFieldError(getField("roamingConfig"), "请选择关联漫游配置") && valid;
       else clearFieldError(getField("roamingConfig"));
     } else {
@@ -8089,14 +8483,24 @@ function openDataPoolForm() {
     }
     valid = validatePriceField("overPoolPrice", "overPoolCurrency", "overPoolPrice") && valid;
     valid = validatePriceField("outPoolPrice", "outPoolCurrency", "outPoolPrice") && valid;
+    if (isMonthlyFixedType) {
+      valid = validatePriceField("poolCapacityFee", "poolCapacityFeeCurrency", "poolCapacityFee") && valid;
+      valid = validatePriceField("poolCardMonthlyFee", "poolCardMonthlyFeeCurrency", "poolCardMonthlyFee") && valid;
+    }
     if (!isShared) {
-      if (!form.elements.capacity.value.trim() || !form.elements.capacityUnit.value) valid = setFieldError(getField("capacity"), "容量不能为空") && valid;
-      else clearFieldError(getField("capacity"));
+      const capacityValue = Number(form.elements.capacity.value.trim());
+      if (!form.elements.capacity.value.trim() || !form.elements.capacityUnit.value) {
+        valid = setFieldError(getField("capacity"), "容量不能为空") && valid;
+      } else if (!Number.isFinite(capacityValue) || capacityValue <= 0) {
+        valid = setFieldError(getField("capacity"), "请输入大于 0 的容量") && valid;
+      } else {
+        clearFieldError(getField("capacity"));
+      }
     } else {
       if (!form.elements.cardCount.value.trim()) valid = setFieldError(getField("cardCount"), "卡总数量不能为空") && valid;
       else clearFieldError(getField("cardCount"));
     }
-    if (isPrepaidType) {
+    if (isContractPoolType) {
       const contractMonths = Number(form.elements.contractMonths.value.trim());
       if (!form.elements.contractMonths.value.trim() || !Number.isInteger(contractMonths) || contractMonths < 1) {
         valid = setFieldError(getField("contractMonths"), "请输入有效时长") && valid;
@@ -8114,11 +8518,12 @@ function openDataPoolForm() {
       poolName: form.elements.poolName.value.trim(),
       customerName: customerSelect.value,
       poolType,
-      packageTemplate: isPrepaidType ? form.elements.roamingConfig.value : packageSelect.value,
+      packageTemplate: isContractPoolType ? form.elements.roamingConfig.value : packageSelect.value,
       totalQuota: capacityText,
-      inPoolUsage: isShared ? "0 MB" : "N/A",
-      monthlyOverPoolUsage: isShared ? "0 MB" : "N/A",
-      monthlyOverUsage: isShared ? "0 MB" : "N/A",
+      monthlyFixedQuota: isMonthlyFixedType ? capacityText : null,
+      inPoolUsage: isPrepaidType ? "N/A" : "0 MB",
+      monthlyOverPoolUsage: isPrepaidType ? "N/A" : "0 MB",
+      monthlyOverUsage: isPrepaidType ? "N/A" : "0 MB",
       monthlyRemaining: isShared ? "0 MB" : capacityText,
       usedCards: 0,
       totalCards: cardCount,
@@ -8126,7 +8531,12 @@ function openDataPoolForm() {
       overageEnabled: false,
       remark: form.elements.remark.value.trim(),
       createdAt: formatDateTime(new Date()),
-      contractMonths: isPrepaidType ? Number(form.elements.contractMonths.value.trim()) : null
+      contractMonths: isContractPoolType ? Number(form.elements.contractMonths.value.trim()) : null,
+      poolCapacityFee: isMonthlyFixedType ? Number(form.elements.poolCapacityFee.value.trim()) : null,
+      poolCapacityFeeCurrency: isMonthlyFixedType ? form.elements.poolCapacityFeeCurrency.value : null,
+      poolCardMonthlyFee: isMonthlyFixedType ? Number(form.elements.poolCardMonthlyFee.value.trim()) : null,
+      poolCardMonthlyFeeCurrency: isMonthlyFixedType ? form.elements.poolCardMonthlyFeeCurrency.value : null,
+      billingCycle: isMonthlyFixedType ? formatDateTime(new Date()).slice(0, 7) : null
     });
     closeModal(form);
     state.page = 1;

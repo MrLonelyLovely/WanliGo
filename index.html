@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WanliGO - 短信模块</title>
-  <link rel="stylesheet" href="css/styles.css?v=20261030-docs">
+  <link rel="stylesheet" href="css/styles.css?v=20261113-renewal-card-fee-2">
 </head>
 <body>
   <div class="app-shell">
@@ -132,7 +132,7 @@
                 <span class="prototype-doc-caret">▼</span>
                 <span class="prototype-doc-batch">流量池</span>
                 <span class="priority-badge is-medium">中优先级</span>
-                <span class="prototype-doc-count">(3 份文档)</span>
+                <span class="prototype-doc-count">(4 份文档)</span>
               </button>
               <div class="prototype-doc-list">
                 <a class="prototype-doc-item" href="./Published/流量池_PRD.pdf?v=20261030-1047" target="_blank" rel="noopener">
@@ -140,6 +140,14 @@
                   <span class="prototype-doc-text">
                     <span class="prototype-doc-name">流量池_PRD</span>
                     <span class="prototype-doc-meta">2026-10-30 10:47:25 更新 · Patrick</span>
+                  </span>
+                  <span class="prototype-doc-open">↗</span>
+                </a>
+                <a class="prototype-doc-item" href="./Published/月固定流量池_PRD.pdf?v=20261116-1105" target="_blank" rel="noopener">
+                  <span class="prototype-doc-icon">PDF</span>
+                  <span class="prototype-doc-text">
+                    <span class="prototype-doc-name">月固定流量池_PRD</span>
+                    <span class="prototype-doc-meta">2026-11-16 11:05:24 更新 · V1.0 · Patrick</span>
                   </span>
                   <span class="prototype-doc-open">↗</span>
                 </a>
@@ -169,11 +177,11 @@
                 <span class="prototype-doc-count">(1 份文档)</span>
               </button>
               <div class="prototype-doc-list">
-                <a class="prototype-doc-item" href="./Published/停机保号_PRD.pdf?v=20261109-1042" target="_blank" rel="noopener">
+                <a class="prototype-doc-item" href="./Published/停机保号_PRD.pdf?v=20261112-1525" target="_blank" rel="noopener">
                   <span class="prototype-doc-icon">PDF</span>
                   <span class="prototype-doc-text">
                     <span class="prototype-doc-name">停机保号_PRD</span>
-                    <span class="prototype-doc-meta">2026-11-09 10:42:01 更新 · Patrick</span>
+                    <span class="prototype-doc-meta">2026-11-12 15:25:19 更新 · Patrick</span>
                   </span>
                   <span class="prototype-doc-open">↗</span>
                 </a>
@@ -774,6 +782,24 @@
               </select>
             </div>
           </label>
+          <label class="field monthly-fixed-renewal-field" hidden>
+            <span>池容量费用</span>
+            <div class="data-pool-split split-currency">
+              <select name="poolCapacityFeeCurrency">
+                <option value="">请选择</option>
+              </select>
+              <input type="text" name="poolCapacityFee" placeholder="请输入池容量费用">
+            </div>
+          </label>
+          <label class="field monthly-fixed-renewal-field" hidden>
+            <span>池卡月费</span>
+            <div class="data-pool-split split-currency">
+              <select name="poolCardMonthlyFeeCurrency">
+                <option value="">请选择</option>
+              </select>
+              <input type="text" name="poolCardMonthlyFee" placeholder="请输入池卡月费">
+            </div>
+          </label>
           <label class="field">
             <span>合约时长</span>
             <div class="data-pool-split split-unit">
@@ -830,6 +856,7 @@
                 <option value="">请选择流量池类型</option>
                 <option value="预购流量池">预购流量池</option>
                 <option value="共享流量池">共享流量池</option>
+                <option value="月固定流量池">月固定流量池</option>
               </select>
               <p class="field-error"></p>
             </div>
@@ -894,6 +921,30 @@
               <div class="data-pool-split split-unit">
                 <input type="text" name="cardCount" placeholder="请输入卡总数量">
                 <span class="split-suffix">张</span>
+              </div>
+              <p class="field-error"></p>
+            </div>
+          </label>
+          <label class="data-pool-field" data-field="poolCapacityFee" hidden>
+            <span class="data-pool-label"><i>*</i>池容量费用</span>
+            <div class="data-pool-control">
+              <div class="data-pool-split split-currency">
+                <select name="poolCapacityFeeCurrency">
+                  <option value="">请选择</option>
+                </select>
+                <input type="text" name="poolCapacityFee" placeholder="请输入池容量费用">
+              </div>
+              <p class="field-error"></p>
+            </div>
+          </label>
+          <label class="data-pool-field" data-field="poolCardMonthlyFee" hidden>
+            <span class="data-pool-label"><i>*</i>池卡月费</span>
+            <div class="data-pool-control">
+              <div class="data-pool-split split-currency">
+                <select name="poolCardMonthlyFeeCurrency">
+                  <option value="">请选择</option>
+                </select>
+                <input type="text" name="poolCardMonthlyFee" placeholder="请输入池卡月费">
               </div>
               <p class="field-error"></p>
             </div>
@@ -1173,6 +1224,7 @@
               <th>成功数</th>
               <th>失败数</th>
               <th>操作时间</th>
+              <th data-pool-log-effective-at>生效时间</th>
               <th>操作</th>
             </tr>
           </thead>
@@ -1197,15 +1249,39 @@
               <th>ICCID</th>
               <th>结果</th>
               <th>失败原因</th>
+              <th data-pool-log-effective-at>生效时间</th>
             </tr>
           </thead>
           <tbody id="dataPoolCardLogDetailBody"></tbody>
         </table>
       </div>
+      <div class="pagination" id="dataPoolCardLogDetailPagination"></div>
       <div class="modal-actions">
         <button type="button" class="btn export" id="dataPoolCardLogDetailExport">导出</button>
         <button type="button" class="btn ghost" data-close-modal>关闭</button>
       </div>
+    </div>
+  </template>
+
+  <template id="monthlyFixedPoolStatusModalTemplate">
+    <div class="modal modal-lg">
+      <button class="modal-close" data-close-modal>×</button>
+      <h2 id="monthlyFixedPoolStatusTitle">批量停机</h2>
+      <form id="monthlyFixedPoolStatusForm" class="form-stack">
+        <div class="field">
+          <span>上传文件</span>
+          <label class="upload-box">
+            <input type="file" name="batchFile" accept=".xls,.xlsx">
+            <span class="upload-icon">☁</span>
+            <strong>将批量 ICCID 文件拖放或点击浏览上传</strong>
+          </label>
+          <p class="upload-tip">请上传大小不超过 <b>5MB</b>，格式为 <b>xls、xlsx</b> 的文件。<button type="button" class="link-btn strong" id="downloadMonthlyFixedPoolStatusTemplate">下载模版</button></p>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn primary">确定</button>
+          <button type="button" class="btn ghost" data-close-modal>取消</button>
+        </div>
+      </form>
     </div>
   </template>
 
@@ -1812,6 +1888,6 @@
   </template>
 
   <div class="toast" id="toast"></div>
-  <script src="js/app.js?v=20261030-docs"></script>
+  <script src="js/app.js?v=20261113-pool-bill-total-card-fee"></script>
 </body>
 </html>

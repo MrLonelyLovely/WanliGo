@@ -2192,8 +2192,9 @@ table.data-pool-cards-table td {
 }
 
 .pool-renewal-shared-panel[hidden],
-.pool-renewal-prepaid-panel[hidden] {
-  display: none;
+.pool-renewal-prepaid-panel[hidden],
+.monthly-fixed-renewal-field[hidden] {
+  display: none !important;
 }
 
 .renewal-lookup-card {
