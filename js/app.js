@@ -71,14 +71,78 @@ const dataPoolPackageTemplates = [
   "2143"
 ];
 const roamingConfigs = [
-  { name: "2143", regions: ["China5", "Hong Kong, SAR China", "Macao, SAR China"], details: [{ priceGroup: "2143", country: "China5,Hong Kong, SAR China,Macao, SAR China", unit: "MB", included: 0, overagePrice: 0.02, monthlyRent: 0, idleFee: 0 }] },
-  { name: "APAC_POSTPAID_Z1", regions: ["Vietnam", "Thailand", "Singapore", "Philippines", "Malaysia", "Indonesia", "Cambodia", "Bangladesh", "Sri Lanka"], details: [{ priceGroup: "APAC Z1", country: "Vietnam,Thailand,Singapore,Philippines,Malaysia,Indonesia,Cambodia,Bangladesh,Sri Lanka", unit: "MB", included: 0, overagePrice: 0.03, monthlyRent: 0, idleFee: 0 }] },
-  { name: "APAC_POSTPAID_Z5", regions: ["Taiwan, Province of China", "Hong Kong, SAR China", "Macao, SAR China", "China5", "Japan", "Korea, Republic of"], details: [{ priceGroup: "APAC Z5", country: "Taiwan, Province of China,Hong Kong, SAR China,Macao, SAR China,China5,Japan,Korea, Republic of", unit: "MB", included: 0, overagePrice: 0.04, monthlyRent: 0, idleFee: 0 }] },
-  { name: "Arqia Z1", regions: ["Brazil", "Chile", "Argentina"], details: [{ priceGroup: "Arqia Z1", country: "Brazil,Chile,Argentina", unit: "MB", included: 1024, overagePrice: 0.02, monthlyRent: 0, idleFee: 0 }] },
-  { name: "Arqia Z5", regions: ["Brazil", "Chile", "Argentina", "Mexico", "Colombia"], details: [{ priceGroup: "Arqia Z5", country: "Brazil,Chile,Argentina,Mexico,Colombia", unit: "MB", included: 2048, overagePrice: 0.02, monthlyRent: 0, idleFee: 0 }] },
-  { name: "Bootstrap_SPE2", regions: ["United Kingdom", "Ireland", "France", "Germany", "Spain", "Italy"], details: [{ priceGroup: "Bootstrap SPE2", country: "United Kingdom,Ireland,France,Germany,Spain,Italy", unit: "MB", included: 0, overagePrice: 0.05, monthlyRent: 0, idleFee: 0 }] },
-  { name: "TAE-Arqia", regions: ["Brazil", "Chile", "Argentina"], details: [{ priceGroup: "TAE-Arqia", country: "Brazil,Chile,Argentina", unit: "MB", included: 512, overagePrice: 0.01, monthlyRent: 0, idleFee: 0 }] },
-  { name: "WanliGO_EU27", regions: ["France", "Germany", "Italy", "Spain", "Netherlands", "Belgium", "Poland", "Sweden", "Austria", "Portugal", "Ireland", "Denmark", "Finland", "Czech Republic", "Greece", "Hungary", "Romania", "Bulgaria", "Croatia", "Slovakia", "Slovenia", "Lithuania", "Latvia", "Estonia", "Luxembourg", "Malta", "Cyprus"], details: [{ priceGroup: "EU27 West", country: "France,Germany,Italy,Spain,Netherlands,Belgium,Austria,Portugal,Ireland,Luxembourg", unit: "MB", included: 0, overagePrice: 0.06, monthlyRent: 0, idleFee: 0 }, { priceGroup: "EU27 East", country: "Poland,Sweden,Denmark,Finland,Czech Republic,Greece,Hungary,Romania,Bulgaria,Croatia,Slovakia,Slovenia,Lithuania,Latvia,Estonia,Malta,Cyprus", unit: "MB", included: 0, overagePrice: 0.06, monthlyRent: 0, idleFee: 0 }] }
+  {
+    name: "2143",
+    regions: ["China5", "Hong Kong, SAR China", "Macao, SAR China"],
+    details: [
+      { priceGroup: "2143-CN", country: "China5", unit: "MB", included: 0, overagePrice: 0.02, monthlyRent: 0, idleFee: 0, smsPrice: 0.05 },
+      { priceGroup: "2143-HK", country: "Hong Kong, SAR China", unit: "MB", included: 0, overagePrice: 0.022, monthlyRent: 0, idleFee: 0, smsPrice: 0.06 },
+      { priceGroup: "2143-MO", country: "Macao, SAR China", unit: "MB", included: 0, overagePrice: 0.022, monthlyRent: 0, idleFee: 0, smsPrice: 0.06 }
+    ]
+  },
+  {
+    name: "APAC_POSTPAID_Z1",
+    regions: ["Vietnam", "Thailand", "Singapore", "Philippines", "Malaysia", "Indonesia", "Cambodia", "Bangladesh", "Sri Lanka"],
+    details: [
+      { priceGroup: "APAC Z1-SEA", country: "Vietnam,Thailand,Singapore,Philippines,Malaysia,Indonesia,Cambodia", unit: "MB", included: 0, overagePrice: 0.03, monthlyRent: 0, idleFee: 0, smsPrice: 0.08 },
+      { priceGroup: "APAC Z1-BD", country: "Bangladesh", unit: "MB", included: 0, overagePrice: 0.028, monthlyRent: 0, idleFee: 0, smsPrice: 0.07 },
+      { priceGroup: "APAC Z1-LK", country: "Sri Lanka", unit: "MB", included: 0, overagePrice: 0.028, monthlyRent: 0, idleFee: 0, smsPrice: 0.07 }
+    ]
+  },
+  {
+    name: "APAC_POSTPAID_Z5",
+    regions: ["Taiwan, Province of China", "Hong Kong, SAR China", "Macao, SAR China", "China5", "Japan", "Korea, Republic of"],
+    details: [
+      { priceGroup: "APAC Z5-GC", country: "China5,Hong Kong, SAR China,Macao, SAR China,Taiwan, Province of China", unit: "MB", included: 0, overagePrice: 0.04, monthlyRent: 0, idleFee: 0, smsPrice: 0.06 },
+      { priceGroup: "APAC Z5-JP", country: "Japan", unit: "MB", included: 0, overagePrice: 0.045, monthlyRent: 0, idleFee: 0, smsPrice: 0.09 },
+      { priceGroup: "APAC Z5-KR", country: "Korea, Republic of", unit: "MB", included: 0, overagePrice: 0.045, monthlyRent: 0, idleFee: 0, smsPrice: 0.09 }
+    ]
+  },
+  {
+    name: "Arqia Z1",
+    regions: ["Brazil", "Chile", "Argentina"],
+    details: [
+      { priceGroup: "Arqia Z1-BR", country: "Brazil", unit: "MB", included: 1024, overagePrice: 0.02, monthlyRent: 0, idleFee: 0, smsPrice: 0.05 },
+      { priceGroup: "Arqia Z1-CL", country: "Chile", unit: "MB", included: 512, overagePrice: 0.022, monthlyRent: 0, idleFee: 0, smsPrice: 0.05 },
+      { priceGroup: "Arqia Z1-AR", country: "Argentina", unit: "MB", included: 512, overagePrice: 0.024, monthlyRent: 0, idleFee: 0, smsPrice: 0.055 }
+    ]
+  },
+  {
+    name: "Arqia Z5",
+    regions: ["Brazil", "Chile", "Argentina", "Mexico", "Colombia"],
+    details: [
+      { priceGroup: "Arqia Z5-South", country: "Brazil,Chile,Argentina", unit: "MB", included: 2048, overagePrice: 0.02, monthlyRent: 0, idleFee: 0, smsPrice: 0.05 },
+      { priceGroup: "Arqia Z5-MX", country: "Mexico", unit: "MB", included: 1024, overagePrice: 0.023, monthlyRent: 0, idleFee: 0, smsPrice: 0.06 },
+      { priceGroup: "Arqia Z5-CO", country: "Colombia", unit: "MB", included: 1024, overagePrice: 0.023, monthlyRent: 0, idleFee: 0, smsPrice: 0.06 }
+    ]
+  },
+  {
+    name: "Bootstrap_SPE2",
+    regions: ["United Kingdom", "Ireland", "France", "Germany", "Spain", "Italy"],
+    details: [
+      { priceGroup: "Bootstrap UKIE", country: "United Kingdom,Ireland", unit: "MB", included: 0, overagePrice: 0.05, monthlyRent: 0, idleFee: 0, smsPrice: 0.08 },
+      { priceGroup: "Bootstrap DE FR", country: "France,Germany", unit: "MB", included: 0, overagePrice: 0.052, monthlyRent: 0, idleFee: 0, smsPrice: 0.085 },
+      { priceGroup: "Bootstrap ES IT", country: "Spain,Italy", unit: "MB", included: 0, overagePrice: 0.054, monthlyRent: 0, idleFee: 0, smsPrice: 0.09 }
+    ]
+  },
+  {
+    name: "TAE-Arqia",
+    regions: ["Brazil", "Chile", "Argentina"],
+    details: [
+      { priceGroup: "TAE-Arqia-BR", country: "Brazil", unit: "MB", included: 512, overagePrice: 0.01, monthlyRent: 0, idleFee: 0, smsPrice: 0.04 },
+      { priceGroup: "TAE-Arqia-SCL", country: "Chile,Argentina", unit: "MB", included: 256, overagePrice: 0.012, monthlyRent: 0, idleFee: 0, smsPrice: 0.045 }
+    ]
+  },
+  {
+    name: "WanliGO_EU27",
+    regions: ["France", "Germany", "Italy", "Spain", "Netherlands", "Belgium", "Poland", "Sweden", "Austria", "Portugal", "Ireland", "Denmark", "Finland", "Czech Republic", "Greece", "Hungary", "Romania", "Bulgaria", "Croatia", "Slovakia", "Slovenia", "Lithuania", "Latvia", "Estonia", "Luxembourg", "Malta", "Cyprus"],
+    details: [
+      { priceGroup: "EU27 West", country: "France,Germany,Italy,Spain,Netherlands,Belgium,Austria,Portugal,Ireland,Luxembourg", unit: "MB", included: 0, overagePrice: 0.06, monthlyRent: 0, idleFee: 0, smsPrice: 0.08 },
+      { priceGroup: "EU27 North", country: "Poland,Sweden,Denmark,Finland,Czech Republic", unit: "MB", included: 0, overagePrice: 0.058, monthlyRent: 0, idleFee: 0, smsPrice: 0.075 },
+      { priceGroup: "EU27 East", country: "Greece,Hungary,Romania,Bulgaria,Croatia,Slovakia,Slovenia,Lithuania,Latvia,Estonia", unit: "MB", included: 0, overagePrice: 0.062, monthlyRent: 0, idleFee: 0, smsPrice: 0.082 },
+      { priceGroup: "EU27 Micro", country: "Malta,Cyprus", unit: "MB", included: 0, overagePrice: 0.065, monthlyRent: 0, idleFee: 0, smsPrice: 0.09 }
+    ]
+  }
 ];
 
 const dataPools = [
@@ -856,6 +920,43 @@ const packageRenewals = [
   { id: 7, iccid: DEMO_DEVICE_ICCID, customerName: "万利通信技术（深圳）有限公司", currentPackageName: "Monthly Fixed_null_2026-04-17", status: "active", packageMonths: 12, activatedAt: "2026-03-26", originalExpiryDate: "2027-03-26" }
 ];
 
+const PROTOTYPE_REFERENCE_DATE = "2026-11-17";
+
+function getMonthlyExpiringCardRange(referenceDate = PROTOTYPE_REFERENCE_DATE) {
+  const ref = new Date(`${referenceDate}T00:00:00`);
+  if (Number.isNaN(ref.getTime())) {
+    return { start: "2026-11-01", end: "2026-12-31", label: "2026-11-01 至 2026-12-31" };
+  }
+  const year = ref.getFullYear();
+  const monthIndex = ref.getMonth();
+  const start = formatDate(new Date(year, monthIndex, 1));
+  const end = formatDate(new Date(year, monthIndex + 2, 0));
+  return { start, end, label: `${start} 至 ${end}` };
+}
+
+function isExpiryInMonthlyExpiringDefaultRange(expiryDate, referenceDate = PROTOTYPE_REFERENCE_DATE) {
+  const { start, end } = getMonthlyExpiringCardRange(referenceDate);
+  return expiryDate >= start && expiryDate <= end;
+}
+
+const monthlyExpiringCards = [
+  { id: 1, orderNo: "SO26011702", iccid: "89860404112026063001", customerName: "中亿（深圳）信息科技有限公司", packageName: "Z1_PAYG_25GB", status: "active", totalTrafficMb: 25600, usedTrafficMb: 2468, expiryDate: "2026-11-15" },
+  { id: 2, orderNo: "SO26011703", iccid: "89860404112026063002", customerName: "中亿（深圳）信息科技有限公司", packageName: "Z1_PAYG_25GB", status: "suspend", totalTrafficMb: 25600, usedTrafficMb: 860, expiryDate: "2026-11-28" },
+  { id: 3, orderNo: "SO26020408", iccid: "89860404112026062903", customerName: "中亿（深圳）信息科技有限公司", packageName: "Trial_Z1_PAYG_250917", status: "active test", totalTrafficMb: 1024, usedTrafficMb: 128, expiryDate: "2026-11-30" },
+  { id: 4, orderNo: "SO26011801", iccid: "89860404112026062805", customerName: "天翼物联", packageName: "Z5_PAYG_25GB", status: "active", totalTrafficMb: 25600, usedTrafficMb: 0, expiryDate: "2026-11-30" },
+  { id: 5, orderNo: "SO26011902", iccid: "89860404112026062706", customerName: "天翼物联", packageName: "Z5_PAYG_250901", status: "suspend", totalTrafficMb: 25600, usedTrafficMb: 512, expiryDate: "2026-12-05" },
+  { id: 6, orderNo: "SO26062401", iccid: "89860404112026062409", customerName: "万利通信技术（深圳）有限公司", packageName: "Monthly_PAYG", status: "active", totalTrafficMb: 0, usedTrafficMb: 3174, expiryDate: "2026-12-18" },
+  { id: 7, orderNo: "SO26062302", iccid: "89860404112026062310", customerName: "万利通信技术（深圳）有限公司", packageName: "BRTV_PAYG_250901", status: "active", totalTrafficMb: 5120, usedTrafficMb: 4201, expiryDate: "2026-12-31" },
+  { id: 8, orderNo: "SO26061011", iccid: "89860404112026062112", customerName: "Ingoo Holding Limited", packageName: "PAYG 03-26", status: "active", totalTrafficMb: 0, usedTrafficMb: 186, expiryDate: "2026-12-12" },
+  { id: 9, orderNo: "SO26061108", iccid: "89860404112026061109", customerName: "中亿（深圳）信息科技有限公司", packageName: "Pre-Pay_2026-03-27", status: "active", totalTrafficMb: 3072, usedTrafficMb: 2896, expiryDate: "2026-11-01" },
+  { id: 10, orderNo: "SO26032604", iccid: DEMO_DEVICE_ICCID, customerName: "万利通信技术（深圳）有限公司", packageName: "Monthly Fixed_null_2026-04-17", status: "active test", totalTrafficMb: 153600, usedTrafficMb: 111020, expiryDate: "2026-12-26" },
+  { id: 11, orderNo: "SO26051101", iccid: "898511606000522690716", customerName: "万利通信技术（深圳）有限公司", packageName: "WLC_Z5_Fixed_280325", status: "active", totalTrafficMb: 0, usedTrafficMb: 0, expiryDate: "2026-11-10" },
+  { id: 12, orderNo: "SO26051203", iccid: "89581805570205984605", customerName: "万利通信技术（深圳）有限公司", packageName: "04-08", status: "active", totalTrafficMb: 10240, usedTrafficMb: 9966, expiryDate: "2026-10-31" },
+  { id: 13, orderNo: "SO26070109", iccid: "89581805570205984629", customerName: "天翼物联", packageName: "Z5_PAYG_25GB", status: "active", totalTrafficMb: 25600, usedTrafficMb: 120, expiryDate: "2027-01-15" }
+];
+
+const monthlyExpiringPackageNameOptions = [...new Set(monthlyExpiringCards.map((row) => row.packageName))].sort();
+
 const deviceStatusOptions = ["active", "suspend", "cancel", "active test", "expired"];
 const devicePackageFilterOptions = [
   "Z1_PAYG_250901",
@@ -1206,7 +1307,8 @@ function enrichPackageQuote(quote) {
         unit: item.unit || "MB",
         included: item.included ?? 0,
         overage: item.overagePrice ?? 0,
-        rent: item.monthlyRent ?? 0
+        rent: item.monthlyRent ?? 0,
+        smsPrice: item.smsPrice ?? quote.smsPricePerSms ?? 0.08
       }));
   }
   const regions = quote.regions?.length
@@ -2305,7 +2407,8 @@ const state = {
     poolBill: {},
     usageDetail: {},
     cardCancel: {},
-    retention: {}
+    retention: {},
+    monthlyExpiringCards: {}
   },
   smsCreatedAtSort: "desc",
   selectedBlacklist: new Set(),
@@ -2391,6 +2494,11 @@ const moduleMeta = {
   dataPool: {
     title: "流量池",
     desc: "查看和管理预购流量池、共享流量池和月固定流量池。",
+    parent: "服务设备"
+  },
+  monthlyExpiringCards: {
+    title: "当月到期卡片管理",
+    desc: `默认展示到期时间在 ${getMonthlyExpiringCardRange().label} 的卡片，支持按客户、套餐与订单号筛选。`,
     parent: "服务设备"
   },
   dataPoolCards: {
@@ -2494,7 +2602,7 @@ function render() {
 }
 
 function updateModuleChrome() {
-  const meta = moduleMeta[state.module];
+  const meta = moduleMeta[state.module] || { title: state.module, parent: "短信" };
   const parent = meta.parent || "短信";
   $("#breadcrumb").textContent = `Dashboard / ${parent} / ${meta.title}`;
   $$(".submenu-item").forEach((item) => {
@@ -2510,6 +2618,7 @@ function updateModuleChrome() {
 }
 
 function renderFilter() {
+  if (!state.filters[state.module]) state.filters[state.module] = {};
   const filters = state.filters[state.module];
   const filterCard = $("#filterCard");
   filterCard.classList.toggle("is-pool-cards-page", state.module === "dataPoolCards");
@@ -2638,6 +2747,26 @@ function renderFilter() {
       <form id="filterForm" class="filter-grid">
         ${fieldInput("ICCID", "iccid", filters.iccid)}
         ${fieldSelect("客户名称", "customerName", customerOptions, filters.customerName)}
+        <label class="field">
+          <span>到期时间</span>
+          <div class="range-row">
+            <input type="date" name="startDate" value="${filters.startDate || ""}">
+            <input type="date" name="endDate" value="${filters.endDate || ""}">
+          </div>
+        </label>
+        ${commonActions}
+      </form>
+    `;
+  }
+
+  if (state.module === "monthlyExpiringCards") {
+    const hideCustomer = isCardCancelCustomerOperator(getCardCancelSessionOperator());
+    filterCard.innerHTML = `
+      <form id="filterForm" class="filter-grid monthly-expiring-filter">
+        ${fieldInput("ICCID", "iccid", filters.iccid, "请输入ICCID")}
+        ${hideCustomer ? "" : fieldSelect("客户名称", "customerName", customerOptions, filters.customerName, "请选择客户名称")}
+        ${fieldSelect("套餐名称", "packageName", monthlyExpiringPackageNameOptions, filters.packageName, "请选择套餐名称")}
+        ${fieldInput("订单号", "orderNo", filters.orderNo, "请输入订单号")}
         <label class="field">
           <span>到期时间</span>
           <div class="range-row">
@@ -3110,6 +3239,15 @@ function renderToolbar() {
     $("#retentionLogBtn").addEventListener("click", () => openRetentionLogModal());
   }
 
+  if (state.module === "monthlyExpiringCards") {
+    const total = getFilteredRows().length;
+    toolbar.innerHTML = `
+      <span class="toolbar-stat">当月到期卡总数：${total}</span>
+      <button class="btn export" id="exportMonthlyExpiringBtn">导出</button>
+    `;
+    $("#exportMonthlyExpiringBtn").addEventListener("click", () => exportRows(getFilteredRows(), "当月到期卡片导出"));
+  }
+
   if (state.module === "packageRenewalAudit") {
     toolbar.innerHTML = `<button class="btn primary" id="approveRenewalAuditBtn" disabled>通过</button>`;
     $("#approveRenewalAuditBtn").addEventListener("click", () => {
@@ -3324,6 +3462,7 @@ function renderTable() {
   if (state.module === "packageQuote") renderPackageQuoteTable(pageRows);
   if (state.module === "packageRemainingQuota") renderPackageRemainingQuotaTable(pageRows);
   if (state.module === "dataPool") renderDataPoolTable(pageRows);
+  if (state.module === "monthlyExpiringCards") renderMonthlyExpiringCardsTable(pageRows);
   if (state.module === "dataPoolCards") {
     if (historyView) {
       renderDataPoolHistoryPanels(pageRows, rows.length, totalPages);
@@ -3564,6 +3703,20 @@ function getFilteredRows() {
       && (!filters.startDate || row.expiryDate >= filters.startDate)
       && (!filters.endDate || row.expiryDate <= filters.endDate))
       .sort((a, b) => a.expiryDate.localeCompare(b.expiryDate));
+  }
+
+  if (state.module === "monthlyExpiringCards") {
+    const filters = state.filters.monthlyExpiringCards || {};
+    const sessionCustomer = getCustomerNameForSessionOperator(getCardCancelSessionOperator());
+    return monthlyExpiringCards
+      .filter((row) => isExpiryInMonthlyExpiringDefaultRange(row.expiryDate)
+        && (sessionCustomer ? row.customerName === sessionCustomer : matchExact(row.customerName, filters.customerName))
+        && matchExact(row.packageName, filters.packageName)
+        && includes(row.orderNo, filters.orderNo)
+        && includes(row.iccid, filters.iccid)
+        && (!filters.startDate || row.expiryDate >= filters.startDate)
+        && (!filters.endDate || row.expiryDate <= filters.endDate))
+      .sort((a, b) => a.expiryDate.localeCompare(b.expiryDate) || a.iccid.localeCompare(b.iccid));
   }
 
   if (state.module === "dataPool") {
@@ -5971,6 +6124,33 @@ function renderPackageQuoteTable(rows) {
     }
     showToast(button.dataset.quoteAction === "edit" ? "修改套餐报价" : "删除套餐报价");
   }));
+}
+
+function renderMonthlyExpiringCardsTable(rows) {
+  $("#tableHead").innerHTML = `
+    <tr>
+      <th>订单号</th>
+      <th>客户名称</th>
+      <th>ICCID</th>
+      <th>卡片状态</th>
+      <th>套餐</th>
+      <th>总流量(MB)</th>
+      <th>已用量(MB)</th>
+      <th>到期时间</th>
+    </tr>
+  `;
+  $("#tableBody").innerHTML = rows.length ? rows.map((row) => `
+    <tr>
+      <td>${row.orderNo}</td>
+      <td>${row.customerName}</td>
+      <td>${row.iccid}</td>
+      <td>${row.status}</td>
+      <td>${row.packageName}</td>
+      <td>${Number(row.totalTrafficMb ?? 0).toLocaleString("zh-CN")}</td>
+      <td>${Number(row.usedTrafficMb ?? 0).toLocaleString("zh-CN")}</td>
+      <td>${row.expiryDate}</td>
+    </tr>
+  `).join("") : emptyRow(8);
 }
 
 function renderPackageRemainingQuotaTable(rows) {
@@ -8561,6 +8741,9 @@ function openPackageForm() {
   const regionBody = fragment.querySelector("#packageQuoteRegionBody");
   const priceField = fragment.querySelector("#packagePriceField");
   const totalField = fragment.querySelector("#packageTotalField");
+  const smsSwitchBtn = fragment.querySelector("#packageSmsSwitch");
+  const smsStateText = fragment.querySelector("#packageSmsStateText");
+  const smsEnabledInput = form.elements.smsEnabled;
   const packageTypeSelect = form.elements.packageType;
 
   const isMonthlyPaygPackage = () => packageTypeSelect.value === "Monthly PAYG";
@@ -8571,6 +8754,26 @@ function openPackageForm() {
       if (node) node.classList.toggle("payg-hidden", payg);
     });
   };
+
+  let smsEnabled = false;
+  const syncSmsSwitch = () => {
+    if (!smsSwitchBtn) return;
+    smsSwitchBtn.classList.toggle("is-on", smsEnabled);
+    smsSwitchBtn.classList.toggle("is-off", !smsEnabled);
+    if (smsStateText) {
+      smsStateText.textContent = smsEnabled ? "开启" : "关闭";
+      smsStateText.classList.toggle("is-on", smsEnabled);
+    }
+    smsSwitchBtn.setAttribute("aria-pressed", smsEnabled ? "true" : "false");
+    if (smsEnabledInput) smsEnabledInput.value = smsEnabled ? "1" : "0";
+  };
+  if (smsSwitchBtn) {
+    smsSwitchBtn.addEventListener("click", () => {
+      smsEnabled = !smsEnabled;
+      syncSmsSwitch();
+    });
+    syncSmsSwitch();
+  }
 
   customerSelect.innerHTML = `<option value="">请选择</option>${customerOptions.map((name) => `<option value="${escapeAttr(name)}">${name}</option>`).join("")}`;
   const quoteNumbers = [...new Set(packageQuotes.map((item) => item.quoteNo).filter(Boolean))];
@@ -8617,9 +8820,10 @@ function openPackageForm() {
         <td>${escapeAttr(item.included ?? "—")}</td>
         <td>${escapeAttr(item.overage ?? "—")}</td>
         <td>${escapeAttr(item.rent ?? "—")}</td>
+        <td>${escapeAttr(item.smsPrice ?? "—")}</td>
       </tr>
     `;
-    }).join("") : `<tr><td colspan="6">暂无区域明细</td></tr>`;
+    }).join("") : `<tr><td colspan="7">暂无区域明细</td></tr>`;
   };
 
   customerSelect.addEventListener("change", syncCustomerPid);
@@ -8655,7 +8859,9 @@ function openPackageForm() {
       bearerNetwork: formData.bearerNetwork || "-",
       coreNetwork: formData.coreNetwork || "-",
       remark: formData.remark || "",
-      quoteNo: formData.quoteNo
+      quoteNo: formData.quoteNo,
+      smsEnabled: formData.smsEnabled === "1",
+      freeSmsCount: formData.freeSmsCount || ""
     });
     closeModal(form);
     state.page = 1;

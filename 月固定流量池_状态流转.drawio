@@ -1,6 +1,6 @@
 <mxfile host="Electron">
   <diagram id="monthly-fixed-status-flow" name="状态流转">
-    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+    <mxGraphModel dx="1006" dy="777" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -8,10 +8,10 @@
           <mxGeometry height="40" width="520" x="80" y="40" as="geometry" />
         </mxCell>
         <mxCell id="s1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fillColor=#d5e8d4;strokeColor=#82b366;" value="active" vertex="1">
-          <mxGeometry height="60" width="160" x="80" y="200" as="geometry" />
+          <mxGeometry height="60" width="160" x="80" y="375" as="geometry" />
         </mxCell>
         <mxCell id="s2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fillColor=#f8cecc;strokeColor=#b85450;" value="suspend&#xa;（状态统一）" vertex="1">
-          <mxGeometry height="70" width="180" x="480" y="195" as="geometry" />
+          <mxGeometry height="70" width="180" x="480" y="370" as="geometry" />
         </mxCell>
         <mxCell id="s3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;fillColor=#f5f5f5;strokeColor=#666666;" value="保持 suspend&#xa;pool_manual&#xa;不收池卡月费 / 停机保号费&#xa;不自动复机" vertex="1">
           <mxGeometry height="90" width="220" x="900" y="320" as="geometry" />
